@@ -1,0 +1,673 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load gravatar %}
+
+{% block content %}
+      <div class="row">
+        <div class="col-lg-2">
+        </div>
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card profile-card-2">
+              <div class="card-img-block">
+                  <img class="img-fluid" src="{% gravatar_url request.account.address 500 %}" alt="Card image cap" width="1500" height="1500" style="object-fit:fill;object-position: 0% -600px; ">
+              </div>
+              <div class="card-body mb-0 pb-0">
+                <img src="{% gravatar_url request.account.address 48 %}" alt="profile-image" class="profile">
+                <div class="col-12 col-lg-12 col-xl-6 m-1 float-right">
+                  <div class="card gradient-ohhappiness">
+                    <div class="card-body">
+                      <div class="media align-items-center">
+                        <div class="w-icon"><i class="fa fa-rocket text-white"></i></div>
+                        <div class="media-body ml-3 border-left-xs border-white-2">
+                          <p class="mb-0 ml-3 extra-small-font text-white">Balance</p>
+                          <h4 class="mb-0 ml-3 text-white"><span id="balance">0</span> TAO</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-lg-12 col-xl-6 m-1">
+                  {% if request.account.is_candidate %}
+                  <div class="card gradient-blooker">
+                  {% else %}
+                    {% if request.account.is_owner %}
+                  <div class="card gradient-yoda">
+                    {% else %}
+                  <div class="card gradient-meridian">
+                    {% endif %}
+                  {% endif %}
+                   <div class="card-body">
+                      <div class="media align-items-center">
+                        {% if request.account.is_candidate %}
+                        <div class="w-icon"><i class="fa fa-handshake-o text-white"></i></div>
+                        {% else %}
+                          {% if request.account.is_owner %}
+                        <div class="w-icon"><i class="fa fa-user-circle text-white"></i></div>
+                          {% else %}
+                        <div class="w-icon"><i class="fa fa-user-circle-o text-white"></i></div>
+                          {% endif %}
+                        {% endif %}
+                        <div class="media-body ml-3 border-left-xs border-white-2">
+                          <h4 class="mb-0 ml-3 text-white">
+                            {% if request.account.is_candidate %}
+                              Validator
+                            {% else %}
+                              {% if request.account.is_owner %}
+                                Owner 
+                              {% else %}
+                                Account
+                              {% endif %}
+                            {% endif %}
+                          </h4>
+                          <p class="mb-0 ml-3 extra-small-font text-white">
+                          {% if request.account.is_candidate %}
+                            <a href="/profile/{{ request.account.owner.address }}" data-toggle="tooltip" title="Click here for owner information.">{{ request.account.address }}</a>
+                          {% else %}
+                            {{ request.account.address }}
+                          {% endif %}
+                        </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-deck flex-column flex-lg-row m-0 px-0">
+                <div class="col-12 col-lg-12 col-xl-12 m-0 px-0">
+                  <div class="row">
+                    <div class="col-12 col-md-3 col-lg-3 col-xl-3">
+                      <div class="card-body text-center px-0">
+                        <div id="chart1"></div>
+                        <p class="mb-0">Avg Daily ROI</p>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-3 col-lg-3 col-xl-3">
+                      <div class="card-body text-center px-0">
+                        <div id="chart2"></div>
+                        <p class="mb-0">Avg Weekly ROI</p>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-3 col-lg-3 col-xl-3">
+                      <div class="card-body text-center px-0">
+                        <div id="chart3"></div>
+                        <p class="mb-0">Avg Yearly ROI</p>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-3 col-lg-3 col-xl-3">
+                      <div class="card-body text-center px-0">
+                        <div id="chart4"></div>
+                        <p class="mb-0">Lifetime ROI</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% if request.user.is_authenticated and request.account.is_candidate %}
+                <div class="col-12 col-lg-12 col-xl-12 m-1">
+                  <button type="button" id="voteforme" class="btn btn-success btn-lg btn-round btn-block waves-effect waves-light m-1" data-toggle="modal" data-target="#votemodal">VOTE FOR THIS VALIDATOR</button>
+                </div>
+                {% endif %}
+                <div class="card flex-column col-lg-3 float-right">
+                  <div class="card-body align-items-start" style="min-height:200px;max-height:200px;">
+                    <div id="spark1"></div>
+                  </div>
+                  <div class="card-body align-items-start p-1" style="min-height:250px;max-height:250px;">
+                     <div class="card-header text-uppercase" style="margin-bottom:20px;">
+                     {% if not request.account.is_candidate %}
+                        Vote Distribution
+                      {% else %}
+                        Voter Distribution
+                      {% endif %}
+                    </div>
+                     <div id="sparklinechart6" class="text-center"><canvas width="200" height="200" style="display: inline-block; width: 200px; height: 200px; vertical-align: top;"></canvas></div>
+                  </div>
+                </div>
+                <div class="card flex-column col-lg-9">
+                  <div class="card-body">
+                    <ul class="nav nav-tabs nav-tabs-primary top-icon nav-justified">
+                        {% if not request.account.is_candidate and request.account.is_owner %}
+                        <li class="nav-item">
+
+                            <a href="javascript:void();" data-target="#profile" data-toggle="pill" class="nav-link active"><i class="fa fa-bank"></i> <span class="hidden-xs">Validators</span></a>
+
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+
+                            <a href="javascript:void();" data-target="#messages" data-toggle="pill" class="nav-link"><i class="fa fa-balance-scale"></i> <span class="hidden-xs">Votes</span></a>
+
+                        </li>
+
+                        <li class="nav-item">
+
+                            <a href="javascript:void();" data-target="#earnings" data-toggle="pill" class="nav-link"><i class="fa fa-balance-scale"></i> <span class="hidden-xs">Earnings</span></a>
+
+                        </li>
+
+                    </ul>
+                    <div class="tab-content p-3">
+                        {% if not request.account.is_candidate and request.account.is_owner %}
+                        <div class="tab-pane active" id="profile">
+                          <div class="row">
+                            <div class="col-lg-12">
+                              <div class="card">
+                                <div class="card-header"><i class="fa fa-handshake-o"></i> {% if request.user == request.account %}Your {% endif %}Validators</div>
+                                <div class="card-body">
+                                  <div class="table-responsive">
+                                    <table class="table align-items-center table-flush table-borderless" id="validator-table">
+                                      <thead>
+                                        <tr>
+                                          <th>Address</th>
+                                          <th>Status</th>
+                                          <th>ROI</th>
+                                           {% if request.user.is_authenticated and request.account.is_owner %}
+                                              {% ifequal request.user.username request.account.address %}
+                                          <th>Action</th>
+                                          {% endifequal %}
+                                          {% endif %}
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        {% endif %}
+                        {% if not request.account.is_candidate and request.account.is_owner %}
+                        <div class="tab-pane" id="messages">
+                        {% else %}
+                        <div class="tab-pane active" id="messages">
+                          {% endif %}
+                          <div class="row">
+                            <div class="col-lg-12">
+                              <div class="card">
+                                <div class="card-header"><i class="fa fa-clock-o ion-clock"></i> Votes</div>
+                                <div class="col-lg-12">
+                                  <p class="text">Total Staked: <span id="total_staked"></span></p>
+                                </div>
+                                <div class="card-body">
+                                  <div class="table-responsive">
+                                    <table class="table align-items-center table-flush table-borderless" id="vote-table">
+                                      <thead>
+                                        <tr>
+                                          <th>Address</th>
+                                          <th>Stake</th>
+                                          <th>Action</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="tab-pane" id="earnings">
+                          <div class="row">
+                            <div class="col-lg-12">
+                              <div class="card">
+                                <div class="card-header"><i class="fa fa-table"></i> Earnings</div>
+                                <div class="col-lg-12">
+                                  <span class="float-right"><button type="button" id="refresh-earnings-button" class="btn btn-inverse-secondary m-1">Refresh</button></span><span class="text"><p id="total_earned"></p></span>
+                                </div>
+                                <div class="card-body">
+                                  <div class="table-responsive">
+                                  <table id="earnings-table" class="table table-bordered extra-small-font">
+                                    <thead>
+                                        <tr>
+                                            {% if request.account.is_candidate %}
+                                            <th>Account</th>
+                                            {% else %}
+                                            <th> Validator
+                                            {% endif %}
+                                            <th>Amount</th>
+                                            <th>Epoch</th>
+                                            <th>Timestamp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            {% if request.account.is_candidate %}
+                                            <th>Account</th>
+                                            {% else %}
+                                            <th> Validator
+                                            {% endif %}
+                                            <th>Amount</th>
+                                            <th>Epoch</th>
+                                            <th>Timestamp</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div><!-- End Row-->
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+{% endblock %}
+{% block javascript %}
+{{ block.super }}
+  <!-- Apex chart -->
+  <script src="/assets/plugins/apexcharts/apexcharts.js"></script>
+  
+  <!-- Sparkline JS -->
+  <script src="/assets/plugins/sparkline-charts/jquery.sparkline.min.js"></script>
+  <!--Data Tables js-->
+  <script src="/assets/plugins/bootstrap-datatable/js/jquery.dataTables.min.js"></script>
+  <script src="/assets/plugins/bootstrap-datatable/js/dataTables.bootstrap4.min.js"></script>
+  <script src="/assets/plugins/bootstrap-datatable/js/dataTables.buttons.min.js"></script>
+  <script src="/assets/plugins/bootstrap-datatable/js/buttons.bootstrap4.min.js"></script>
+  <script src="/assets/plugins/bootstrap-datatable/js/jszip.min.js"></script>
+  <script src="/assets/plugins/bootstrap-datatable/js/pdfmake.min.js"></script>
+  <script src="/assets/plugins/bootstrap-datatable/js/vfs_fonts.js"></script>
+  <script src="/assets/plugins/bootstrap-datatable/js/buttons.html5.min.js"></script>
+  <script src="/assets/plugins/bootstrap-datatable/js/buttons.print.min.js"></script>
+  <script src="/assets/plugins/bootstrap-datatable/js/buttons.colVis.min.js"></script>
+
+
+<script>
+  var shifu_addr = "http://localhost:9000";
+  var roi_url = shifu_addr + "/api/roi/{{ request.account.address }}/";
+  var vote_url = shifu_addr + "/api/votes/{{ request.account.address }}/";
+  var candidates_url = shifu_addr + "/api/candidates/{{ request.account.address }}/";
+  var table;
+  {% if not request.account.is_candidate  and request.account.is_owner %}
+  table = $('#validator-table').DataTable( {
+      "filter":   false,
+      "paging":   false,
+      "columns": [
+        {"orderable": "true"},
+        {"orderable": "false"},
+        {"orderable": "true"},
+          {% if request.user.is_authenticated and request.account.is_owner %}
+            {% ifequal request.user.username request.account.address %}
+        {"orderable": "true"},
+            {% endifequal %}
+          {% endif %}
+      ]
+  });
+  {% endif %}
+    var table2 = $('#vote-table').DataTable( {
+      "filter":   false,
+      "paging":   false,
+      "columns": [
+        {"orderable": "true"},
+        {"orderable": "true"},
+        {"orderable": "true"},
+      ],
+    });
+    var earnings_table = $('#earnings-table').DataTable( {
+        filter:   false,
+        lengthChange: false,
+        pageLength: 10,
+      buttons: [ 'copy', 'excel', 'pdf', 'print' ]
+    } );
+    earnings_table.buttons().container()
+      .appendTo( '#earnings-table_wrapper .col-md-6:eq(0)' );
+
+            var spark1 = {
+              chart: {
+                foreColor: '#e4e6eb',
+                type: 'area',
+                height: 160,
+                sparkline: {
+                  enabled: true
+                },
+              },
+              stroke: {
+                width: 2,
+                curve: 'straight'
+              },
+              fill: {
+                type: 'gradient',
+                  gradient: {
+                      shade: 'dark',
+                      {% if not request.account.is_candidate %}
+                      gradientToColors: [ '#7934f3'],
+                      {% else %}
+                      gradientToColors: [ '#2af598'],
+                      {% endif %}
+                      shadeIntensity: 1,
+                      type: 'horizontal',
+                      opacityFrom: 1,
+                      opacityTo: 1,
+                      stops: [0, 100, 100, 100]
+                  },
+              },
+              colors: ["#009efd"],
+              dataLabels: {
+                    enabled: false,
+                },
+              tooltip: {
+                  enabled: true,
+                  theme: 'dark',
+                  style: {
+                    fontSize: '12px',
+                    fontFamily: undefined
+                  },
+                  x: {
+                      show: true,
+                      format: 'dd MMM',
+                      formatter: undefined,
+                  },
+                  y: {
+                      show: true,
+                      formatter: undefined,
+                      title: {
+                          formatter: (seriesName) => seriesName,
+                      },
+                  },
+                  marker: {
+                      show: true,
+                  },
+                  fixed: {
+                      enabled: false,
+                      position: 'topRight',
+                      offsetX: 0,
+                      offsetY: 0,
+                  },
+              },
+              series: [],
+              labels: [],
+              yaxis: {
+                min: 0
+              },
+              subtitle: {
+                text: '',
+                offsetX: 0,
+                offsetY: 15,
+                style: {
+                  fontSize: '24px',
+                  cssClass: 'apexcharts-yaxis-title'
+                }
+              },
+              title: {
+                text: 'Last 30 Days Earnings',
+                offsetX: 0,
+                style: {
+                  fontSize: '14px',
+                  cssClass: 'apexcharts-yaxis-title'
+                }
+              }
+            };
+
+    var spark1 = new ApexCharts(document.querySelector("#spark1"), spark1);
+    spark1.render();
+
+    var val=[];
+    var addr=[];
+    var roi = 0;
+    {% if not request.account.is_candidate %}
+    const slice_colors = ['#2af5c8', 'rgba(42,245,200, 0.60)', 'rgba(42,245,200, 0.55)', 'rgba(42,245,200, 0.50)', 'rgba(42,245,200, 0.45)', 'rgba(42,245,200, 0.40)', 'rgba(42,245,200, 0.35)', 'rgba(42,245,200, 0.30)', 
+                  'rgba(42,245,200, 0.25)','rgba(42,245,200, 0.20)']
+    {% else %}
+    const slice_colors = ['#7934f3', 'rgba(121, 52, 243, 0.60)', 'rgba(121, 52, 243, 0.55)', 'rgba(121, 52, 243, 0.50)', 'rgba(121, 52, 243, 0.45)', 'rgba(121, 52, 243, 0.40)', 'rgba(121, 52, 243, 0.35)', 'rgba(121, 52, 243, 0.30)', 
+                    'rgba(121, 52, 243, 0.25)','rgba(121, 52, 243, 0.20)']
+    {% endif %}
+    var total = 0;
+    const voterAmount = async (c, a) => {
+      return await validator_contract.methods.getVoterCap(c,a).call();
+    }
+    const candidateList = async () => {
+      return await validator_contract.methods.getCandidates().call();
+    }
+    const candidateVoters = async(c) => {
+      return await validator_contract.methods.getVoters(c).call();
+    }
+    const buildCandidateVoterTable =  (account, table) => {
+      let vs = candidateVoters(account).then(async( vs) => {
+        var total_staked = 0
+        let voters = vs.map(async(q)=>{
+          const a = await voterAmount(account, q);
+          var amount = web3.utils.fromWei(a,'ether');
+          var h;
+          if (q == user_address) {
+            h='<button type="button" id="button-unvote" class="btn btn-warning  waves-effect waves-light m-1" data-validator="' + q + '" data-staked="' + amount + '" data-toggle="modal" data-target="#unvotemodal">Unvote</button>';
+          } else {
+            h= ''
+          }
+          total_staked = total_staked + (amount*1);
+          $('#total_staked').html(nf.format(parseFloat(total_staked).toFixed(4)) + " TAO");
+          return [
+              profile_link(q),
+              amount,
+              h,
+              q
+            ]  
+        })
+        return Promise.all(voters).then(function(vArr){
+          let stringArray = vArr.map(JSON.stringify);
+          let uniqueStringArray = new Set(stringArray);
+          let uniqueArray = Array.from(uniqueStringArray, JSON.parse);
+          return uniqueArray
+        }).catch(function(err){
+          console.log('ERROR getVoterTable', err)
+        });
+      })
+      return vs
+    }
+    const buildAccountVoteTable = (account) => {
+      // get candidates
+      let list = candidateList().then(async (candidates) => {
+        const candidate_list = [];
+        var total_staked = 0
+        vote_list = candidates.map(function(c,i){
+          const vote = candidateVoters(c).then(async (voters) => {
+            if (voters.indexOf(account) > -1){
+              const amount = voterAmount(c,account).then(function(a){
+                var amount = web3.utils.fromWei(a,'ether');
+                var h;
+                if ((account == user_address) && (amount > 0)) {
+                  h='<button type="button" id="button-unvote" class="btn btn-warning  waves-effect waves-light m-1" data-validator="' + c + '" data-staked="' + amount + '" data-toggle="modal" data-target="#unvotemodal">Unvote</button>';
+                } else {
+                  h= ''
+                }
+                total_staked = total_staked + (amount*1);
+                $('#total_staked').html(nf.format(parseFloat(total_staked).toFixed(4)) + " TAO");
+                return [
+                  profile_link(c),
+                  amount,                  
+                  h,
+                  c
+
+                ]
+              })
+              return await amount;
+            }
+          });
+          return vote;
+        });
+        return Promise.all(vote_list).then(function(vArr){
+          const result = [];
+          vArr.forEach(function(v,k){
+            if (v){
+              result.push(v)
+            }
+          })
+          return result
+        }).catch(function(err){
+          console.log('ERROR getVoterTable', err)
+        })
+      })
+      return list
+    }
+
+function dataRefresh(){
+  var account = '{{ request.account.address }}'
+  getBalance(account);
+  {% if not request.account.is_candidate and request.account.is_owner %}
+  $.ajax({
+    type: 'GET',
+    url: candidates_url,
+    dataType: 'json',
+    success: function (result) {
+      data = [];
+      stake = {};
+      result['candidates'].forEach(function(i,x){
+        if (i.status == 'MASTERNODE') {
+          status = '<span class="badge badge-pill badge-success shadow-success m-1">ACTIVE</span>'
+        } else if (i.status == 'SLASHED') {
+          status = '<span class="badge badge-pill badge-success shadow-warning m-1">SLASHED</span>'
+        } else {
+          status = '<span class="badge badge-pill badge-dark shadow-warning m-1">'+ i.status +'</span>'
+        }
+        var h = '';
+        {% if request.user.is_authenticated %}
+        {% ifequal request.user.username request.account.address %}
+          h='<button type="button" id="button-resign" class="btn btn-light button-resign waves-effect waves-light m-1" data-validator="' + i.address + '" data-toggle="modal" data-target="#resignmodal">Resign</button>';
+        {% endifequal %}
+        {% endif %}
+        data.push([
+          profile_link(i.address),
+          status,
+          i.roi + "%",
+          h,
+        ])
+      })
+      if (data.length > 0) {
+        $('#owner-badge').removeClass('d-none');
+      }
+      table.clear();
+      table.rows.add(data);
+      table.draw();
+      $('.button-resign').on('click',function(){
+        $('#resign-address').html(jQuery(this).data('validator'))
+      });
+    },
+  });
+  {% endif %}
+  {% if not request.account.is_candidate %}
+  const votes = [buildAccountVoteTable(account)]
+  {% else %}
+  const votes = [buildCandidateVoterTable(account)];
+  {% endif %}
+  return Promise.all(votes).then(function(vote){
+  var _v=vote[0]
+  table2.clear();
+  table2.rows.add(_v);
+  table2.draw();
+    var val=[];
+    var addr=[];
+    total = 0;
+    _v.forEach(function(v,i){
+      total = total + (v[1] * 1);
+      addr.push(v[3]);
+    })
+    _v.forEach(function(v,i){
+      var a = (v[1] * 1) / total;
+      val.push(parseFloat(a).toFixed(4));
+    });
+    $('#sparklinechart6').sparkline(val, {
+      type: 'pie',
+      height: '160',
+      resize: true, 
+      tooltipFormat: String.fromCharCode(123) + String.fromCharCode(123) + 'offset:name}} (' + String.fromCharCode(123) + String.fromCharCode(123) + 'percent.1}}%)',
+      tooltipValueLookups: {
+          name: addr,
+      },
+      sliceColors: slice_colors,
+    });
+    $(".btn-warning").on("click", function(){
+      $("#unvote-balance").html("{{ request.user.account.balance }}");
+      $('#unvote-address').html(this.dataset.validator);
+      $('#unvote-staked').html(this.dataset.staked);
+      $('#unvote-amount').val(this.dataset.staked);
+    });
+    $("#voteforme").on("click", function(){
+      $("#vote-amount").focus();
+      $("#vote-balance").html("{{ request.user.account.balance }}");
+      $('#vote-address').html('{{request.account.address}}');
+      $('#vote-staked').html(total);
+      $('#vote-roi').html(roi);
+    });
+    $('[data-toggle="tooltip"]').tooltip()
+    return vote[0]
+  })
+}
+const refreshEarnings= () => {
+    $('#refresh-earnings-button').html('Refreshing...')
+    $.ajax({
+        type: "GET",
+        url: "{% url 'earnings_api' request.account.address %}",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (response) {
+            var data = [];
+            var label = [];
+            var rows = [];
+            var total= 0;
+            response.earnings.forEach(function(i,d){
+              label.push(i.date + " " + nf.format(parseFloat(i.total).toFixed(4)) +" TAO");
+              data.push({x:i.date,y:i.total});
+            });
+            response.detail.forEach(function(i,d){
+              {% if request.account.is_candidate %}
+              rows.push([profile_link(i.account),i.amount,i.epoch,i.timestamp]);
+              {% else %}
+              rows.push([profile_link(i.validator),i.amount,i.epoch,i.timestamp]);
+              {% endif %}
+              total = total + (i.amount*1);
+            })
+            earnings_table.clear();
+            earnings_table.rows.add(rows);
+            earnings_table.draw();
+            $('#total_earned').html('Total Earned: ' + total + ' TAO');
+            var subtitle=nf.format(parseFloat(response['total_earnings']).toFixed(8)) + " TAO";
+            options = {
+                labels: label,
+                subtitle: {
+                  text: subtitle,
+                },
+                tooltip: {
+                  items: {
+                    display: response.earnings,
+                  }
+                }
+            };
+            spark1.updateOptions(options); 
+            var series = [{
+                name: 'Earnings Per Day',
+                data: data,
+              }];
+            spark1.updateSeries(series);
+            $('#refresh-earnings-button').html('Refresh');
+
+            $(".se-pre-con").fadeOut("slow");        
+        }
+    });  
+}
+$(function() {
+    "use strict";
+    const x = refreshEarnings()
+    $('#refresh-earnings-button').on('click',function(){
+      refreshEarnings()
+    });
+    const _v = [dataRefresh()];
+    var i = setInterval(function() {
+      dataRefresh();
+    }, 10000);
+
+
+
+});
+
+</script>
+  <script src="/assets/js/profile.js"></script>
+
+{% endblock javascript %}
