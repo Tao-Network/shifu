@@ -16,8 +16,7 @@ from eth_utils import to_bytes, to_hex, from_wei, to_int, to_wei
 from .helpers import *
 import time, os
 
-log = logging.getLogger('console')
-
+log = logging.getLogger(__name__)
 
 start_block = 3224520
 def Start():

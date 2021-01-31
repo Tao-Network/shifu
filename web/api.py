@@ -22,6 +22,9 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 
 from web.serializers import _Vote, _Roi, _Earnings, _DailyEarnings, _EarningsDetails, _NetworkInfo, _OwnedCandidates, _OwnedCandidate, _Candidate, _AllCandidates
+import logging
+
+log = logging.getLogger(__name__)
 
 class VotesList(APIView):
 	"""

@@ -12,6 +12,9 @@ from web3 import Web3
 from django.db.models import Sum
 from web.helpers import * 
 from operator import itemgetter
+import logging
+
+log = logging.getLogger(__name__)
 
 def logout_view(request):
 	logout(request)

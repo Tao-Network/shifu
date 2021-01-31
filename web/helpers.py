@@ -8,7 +8,7 @@ from datetime import datetime
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_utils import to_bytes, to_hex, from_wei, to_int,is_hex_address
-import json, time, logging
+import json, time
 import sha3, ethereum
 from django import forms
 from django.utils.translation import ugettext_lazy as _
@@ -21,6 +21,9 @@ for _ in range(settings.MAX_RETRIES):
 		break	
 	except:
 		time.sleep(1)
+import logging
+
+log = logging.getLogger(__name__)
 
 with open('{0}/abis/TaoValidator.abi'.format(settings.BASE_DIR), 'r') as f:
 	ValidatorABI = json.load(f)

@@ -29,22 +29,6 @@ if os.getenv('CRAWLER'):
 
 ALLOWED_HOSTS = ['*']
 
-### Celery
-BROKER_URL = os.getenv('BROKER_URL')
-BROKER_USER=os.getenv('BROKER_USER')
-BROKER_PASSWORD=os.getenv('BROKER_PASSWORD')
-CELERY_RESULT_BACKEND=os.getenv('CELERY_RESULT_BACKEND')
-#: Only add pickle to this list if your broker is secured
-#: from unwanted access (see userguide/security.html)
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERYD_PREFETCH_MULTIPLIER = 1
-#CELERYD_TASK_TIME_LIMIT = 30 #sec
-#CELERYD_TASK_SOFT_TIME_LIMIT = 30 #sec
-CELERY_ACKS_LATE = True
-###
-
 BLOCKS_PER_EPOCH = 360
 CHAIN_ID = 558
 RPC_ENDPOINT = os.getenv('RPC_ENDPOINT')
@@ -222,25 +206,40 @@ REST_FRAMEWORK = {
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
-        'simple': {
-            'format': '%(levelname)s %(message)s',
-             'datefmt': '%y %b %d, %H:%M:%S',
-            },
+        'console': {
+            # exact format is not important, this is the minimum information
+            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
         },
+        'django.server': DEFAULT_LOGGING['formatters']['django.server'],
+    },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'formatter': 'console',
         },
+        # Add Handler for Sentry for `warning` and above
+        'sentry': {
+            'level': 'WARNING',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
+        'django.server': DEFAULT_LOGGING['handlers']['django.server'],
     },
     'loggers': {
-        'console': {
-            'handlers': [ 'console'],
+    # root logger
+        '': {
+            'level': 'WARNING',
+            'handlers': ['console', 'sentry'],
         },
-    }
+        'shifu': {
+            'level': 'INFO',
+            'handlers': ['console', 'sentry'],
+            # required to avoid double logging with root logger
+            'propagate': False,
+        },
+        'django.server': DEFAULT_LOGGING['loggers']['django.server'],
+    },
 }
 from logging.config import dictConfig
 dictConfig(LOGGING)

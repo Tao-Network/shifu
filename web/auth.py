@@ -17,6 +17,9 @@ from django.contrib.auth import authenticate, get_user_model
 
 from django.utils.translation import ugettext_lazy as _
 from .utils import validate_eth_address
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class LoginForm(forms.Form):
