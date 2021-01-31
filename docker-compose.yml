@@ -43,7 +43,6 @@ services:
     command: bash -c "python /code/manage.py makemigrations admin auth contenttypes sessions web --noinput && python /code/manage.py migrate --noinput && celery -A shifu worker -l warning --concurrency=7 -Ofair"
     depends_on:
       - postgres
-      - rabbitmq
       - redis
     restart: "unless-stopped"
     networks: 
@@ -61,7 +60,7 @@ services:
       - CRAWLER=1
   shifu_api:
     container_name: shifu_api
-    hostname: shifu
+    hostname: shifu_api
     build: .
     command: bash -c "python /code/manage.py collectstatic --noinput && gunicorn shifu.wsgi:application --bind 0.0.0.0:9000"
     volumes:

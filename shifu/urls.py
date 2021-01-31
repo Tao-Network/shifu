@@ -70,3 +70,10 @@ if settings.DEBUG:
 	from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 	urlpatterns += staticfiles_urlpatterns()
+
+import os 
+if os.getenv("CRAWLER"):
+	import logging
+	from web.tasks import Start
+	log = logging.getLogger('console')
+	Start.delay()

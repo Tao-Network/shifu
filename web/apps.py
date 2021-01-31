@@ -11,7 +11,7 @@ class CrawlerConfig(AppConfig):
 	verbose_name = "Blockchain Crawler"
 
 	def ready(self):
-		if 'runserver' not in sys.argv:
+		if os.getenv("CRAWLER"):
 			return True
 		# you must import your modules here 
 		# to avoid AppRegistryNotReady exception 
