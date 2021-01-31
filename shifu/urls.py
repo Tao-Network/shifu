@@ -27,6 +27,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.conf import settings
+import os,logging
 
 router = routers.DefaultRouter()
 api_info =   openapi.Info(
@@ -66,14 +67,6 @@ urlpatterns = [
 	re_path(r'^api/swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 	re_path(r'^api/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
-if settings.DEBUG:
-	from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
-	urlpatterns += staticfiles_urlpatterns()
-
-import os 
-if os.getenv("CRAWLER"):
-	import logging
-	from web.tasks import Start
-	log = logging.getLogger('console')
-	Start.delay()
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+urlpatterns += staticfiles_urlpatterns()

@@ -2,6 +2,7 @@
 .env
 rabbitmq/
 postgres/
+redis/
 db.sqlite3
 celery.log
 reset.sh

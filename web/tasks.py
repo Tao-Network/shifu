@@ -17,7 +17,7 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_utils import to_bytes, to_hex, from_wei, to_int, to_wei
 from .helpers import *
-import time
+import time, os
 
 start_block = 3224520
 @shared_task
@@ -26,16 +26,14 @@ def Start():
 	log.warning('*** Crawler started')
 	one_day = 48 * settings.BLOCKS_PER_EPOCH
 	while True:
+		log.warning('getting block')
 		current=getBlock('latest')
 		if config.block_number <= current.number:
 			config.block_number = config.block_number + 1
 			config.save()
-			ProcessBlock.delay(config.block_number)
+			ProcessBlock(config.block_number)
 			if (config.block_number % settings.BLOCKS_PER_EPOCH == 0):
-				ProcessEpoch.delay(config.block_number)
-			if config.block_number - start_block < 10:
-				time.sleep(1)
-
+				ProcessEpoch(config.block_number)
 
 def createEpoch(block_number,block):
 	epoch_number =  block_number // settings.BLOCKS_PER_EPOCH
