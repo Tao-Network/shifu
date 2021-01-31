@@ -16,10 +16,13 @@ from eth_utils import to_bytes, to_hex, from_wei, to_int, to_wei
 from .helpers import *
 import time, os
 
+log = logging.getLogger('console')
+
+
 start_block = 3224520
 def Start():
 	config, created = Crawler.objects.get_or_create(id=0,defaults={'block_number': start_block},)
-	log.info('*** Crawler started')
+	log.warning('*** Crawler started')
 	one_day = 48 * settings.BLOCKS_PER_EPOCH
 	while True:
 		current=getBlock('latest')
@@ -51,7 +54,7 @@ def createAccount(address,is_candidate,block_number):
 	if address is None:
 		return None, False
 	Account.objects.update()
-	#log.info('create account {0}'.format(address))
+	#log.warning('create account {0}'.format(address))
 	a, created = Account.objects.get_or_create(address=address, defaults={
 				'is_candidate':is_candidate,
 				'address':address,
@@ -88,7 +91,7 @@ def createCandidate(candidate,c,block_number,e):
 		cs.save()
 	return cs,created
 
-def createVote(_vote,vote,block_number,unvote=False):
+def createVote(_vote,vote,block_number,e,unvote=False):
 	v, created = Vote.objects.get_or_create(tx=vote.transactionHash)
 	if created:
 		log.debug('create voter')
@@ -108,7 +111,7 @@ def createVote(_vote,vote,block_number,unvote=False):
 	return v, created
 
 def Sync(block_number, current_block, block):
-	log.info('Sync started.')
+	log.warning('Sync started.')
 	log.debug('get all candidates')
 	candidates = getCandidates()
 	epoch_number,e,created = createEpoch(block_number,block)
@@ -125,10 +128,9 @@ def Sync(block_number, current_block, block):
 	ProcessVoteFilter(block_number,True)
 
 	while block_number < current_block:
-		log.info('Processing epoch {0}.'.format(block_number // settings.BLOCKS_PER_EPOCH))
 		ProcessEpoch(block_number)
 		block_number += settings.BLOCKS_PER_EPOCH
-	log.info('Sync complete.')
+	log.warning('Sync complete.')
 	return block_number - settings.BLOCKS_PER_EPOCH
 
 def ProcessVoteFilter(block_number,is_unvote):
@@ -145,10 +147,10 @@ def ProcessVoteFilter(block_number,is_unvote):
 		epoch_number,e,created = createEpoch(block_number,block)
 		_vote = vote.args
 		log.debug('create vote')
-		vote, created = createVote(_vote,vote,block_number,e, is_unvote)
+		vote, created = createVote(_vote,vote,block_number,e,is_unvote)
 
 def ProcessBlock(block_number):
-	log.info('Processing Block #{0}'.format(int(block_number) ))
+	log.warning('Processing Block #{0}'.format(int(block_number) ))
 	block = getBlock(block_number)
 	log.debug('create eopch')
 	epoch_number,e,created = createEpoch(block_number,block)
@@ -171,7 +173,7 @@ def ProcessBlock(block_number):
 def ProcessEpoch(block_number):
 	block = getBlock(block_number)
 	epoch_number,e,created = createEpoch(block_number,block)
-	log.info('Processing Epoch #{0}'.format(int(epoch_number)))
+	log.warning('Processing Epoch #{0}'.format(int(epoch_number)))
 
 	rewards = getRewardsByHash(to_hex(block.hash))
 

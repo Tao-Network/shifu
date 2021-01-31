@@ -235,17 +235,10 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        'celery': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'celery.log',
-            'formatter': 'simple',
-            'maxBytes': 1024 * 1024 * 100,  # 100 mb
-        },
     },
     'loggers': {
-        'celery': {
-            'handlers': ['celery', 'console'],
+        'console': {
+            'handlers': [ 'console'],
         },
     }
 }
