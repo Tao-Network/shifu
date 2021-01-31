@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from django.http import Http404
 from web.models import Account, Reward
 from web3 import Web3
-
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
 from django import forms
 from django.contrib.auth import authenticate, get_user_model
@@ -50,6 +50,7 @@ def get_redirect_url(request):
             url = settings.LOGIN_REDIRECT_URL
         return url
 
+@csrf_exempt
 @require_http_methods(["GET", "POST"])
 def login_api(request):
 	if request.method == 'GET':
