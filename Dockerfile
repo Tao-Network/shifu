@@ -14,5 +14,3 @@ COPY shifu /code/
 COPY json /code/
 COPY abis /code/
 WORKDIR /code/
-
-EXPOSE 8000

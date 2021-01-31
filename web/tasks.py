@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 
-from celery import shared_task
-from celery.utils.log import get_task_logger
-
 from .models import *
 
 from datetime import datetime 
@@ -20,14 +17,16 @@ from .helpers import *
 import time, os
 
 start_block = 3224520
-@shared_task
 def Start():
 	config, created = Crawler.objects.get_or_create(id=0,defaults={'block_number': start_block},)
-	log.warning('*** Crawler started')
+	log.info('*** Crawler started')
 	one_day = 48 * settings.BLOCKS_PER_EPOCH
 	while True:
-		log.warning('getting block')
 		current=getBlock('latest')
+		if config.block_number == start_block:
+			block_number = Sync(start_block,current.number,current)
+			config.block_number = block_number
+			config.save()
 		if config.block_number <= current.number:
 			config.block_number = config.block_number + 1
 			config.save()
@@ -52,7 +51,7 @@ def createAccount(address,is_candidate,block_number):
 	if address is None:
 		return None, False
 	Account.objects.update()
-	#log.warning('create account {0}'.format(address))
+	#log.info('create account {0}'.format(address))
 	a, created = Account.objects.get_or_create(address=address, defaults={
 				'is_candidate':is_candidate,
 				'address':address,
@@ -89,7 +88,7 @@ def createCandidate(candidate,c,block_number,e):
 		cs.save()
 	return cs,created
 
-def createVote(_vote,vote,block_number,e,unvote=False):
+def createVote(_vote,vote,block_number,unvote=False):
 	v, created = Vote.objects.get_or_create(tx=vote.transactionHash)
 	if created:
 		log.debug('create voter')
@@ -108,19 +107,48 @@ def createVote(_vote,vote,block_number,e,unvote=False):
 		v.save()
 	return v, created
 
-def ProcessVoteFilter(block_number,e,filter,is_unvote):
+def Sync(block_number, current_block, block):
+	log.info('Sync started.')
+	log.debug('get all candidates')
+	candidates = getCandidates()
+	epoch_number,e,created = createEpoch(block_number,block)
+	for candidate in candidates['candidates']:
+		c = candidates['candidates'][candidate]
+		candidate = rpc.toChecksumAddress(candidate)
+		log.debug(c)
+		createCandidate(candidate,c,block_number,e)
+
 	log.debug('vote filter')
-	vote_filter = validatorABI.events.Vote.createFilter(fromBlock=block_number-1,toBlock=block_number)
+	ProcessVoteFilter(block_number,False)
+
+	log.debug('filter unvote')
+	ProcessVoteFilter(block_number,True)
+
+	while block_number < current_block:
+		log.info('Processing epoch {0}.'.format(block_number // settings.BLOCKS_PER_EPOCH))
+		ProcessEpoch(block_number)
+		block_number += settings.BLOCKS_PER_EPOCH
+	log.info('Sync complete.')
+	return block_number - settings.BLOCKS_PER_EPOCH
+
+def ProcessVoteFilter(block_number,is_unvote):
+	log.debug('vote filter')
+	if is_unvote:
+		vote_filter = validatorABI.events.Unvote.createFilter(fromBlock=block_number-1,toBlock='latest')
+	else:
+		vote_filter = validatorABI.events.Vote.createFilter(fromBlock=block_number-1,toBlock='latest')
 	log.debug('log entries')
 	log_entries = vote_filter.get_all_entries()
 	for vote in log_entries:
+		block_number = vote.blockNumber
+		block = getBlock(block_number)
+		epoch_number,e,created = createEpoch(block_number,block)
 		_vote = vote.args
 		log.debug('create vote')
 		vote, created = createVote(_vote,vote,block_number,e, is_unvote)
 
-@shared_task
 def ProcessBlock(block_number):
-	log.warning('Processing Block #{0}'.format(int(block_number) ))
+	log.info('Processing Block #{0}'.format(int(block_number) ))
 	block = getBlock(block_number)
 	log.debug('create eopch')
 	epoch_number,e,created = createEpoch(block_number,block)
@@ -134,19 +162,16 @@ def ProcessBlock(block_number):
 		createCandidate(candidate,c,block_number,e)
 
 	log.debug('vote filter')
-	vote_filter = validatorABI.events.Vote.createFilter(fromBlock=block_number-1,toBlock=block_number)
-	ProcessVoteFilter(block_number,e,vote_filter,False)
+	ProcessVoteFilter(block_number,False)
 
 	log.debug('filter unvote')
-	unvote_filter = validatorABI.events.Unvote.createFilter(fromBlock=block_number-1,toBlock=block_number)
-	ProcessVoteFilter(block_number,e,unvote_filter,True)
+	ProcessVoteFilter(block_number,True)
 
 
-@shared_task
 def ProcessEpoch(block_number):
 	block = getBlock(block_number)
 	epoch_number,e,created = createEpoch(block_number,block)
-	log.warning('Processing Epoch #{0}'.format(int(epoch_number)))
+	log.info('Processing Epoch #{0}'.format(int(epoch_number)))
 
 	rewards = getRewardsByHash(to_hex(block.hash))
 
