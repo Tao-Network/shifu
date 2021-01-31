@@ -74,6 +74,7 @@ REST_FRAMEWORK = {
 MANAGERS = ADMINS
 
 # Application definition
+CORS_ORIGIN_ALLOW_ALL=True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -123,10 +124,6 @@ WSGI_APPLICATION = 'shifu.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:9000",
-]
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 

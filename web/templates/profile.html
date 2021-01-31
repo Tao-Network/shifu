@@ -648,7 +648,6 @@ const refreshEarnings= () => {
             spark1.updateSeries(series);
             $('#refresh-earnings-button').html('Refresh');
 
-            $(".se-pre-con").fadeOut("slow");        
         }
     });  
 }
@@ -662,9 +661,7 @@ $(function() {
     var i = setInterval(function() {
       dataRefresh();
     }, 10000);
-
-
-
+    $(".se-pre-con").fadeOut("slow");        
 });
 
 </script>
