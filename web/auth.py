@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, reverse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import login, authenticate, logout
 from django.http import JsonResponse
+from django.urls.exceptions import NoReverseMatch
 from django.conf import settings
 import random
 import string, json
