@@ -6,7 +6,6 @@
     const balance = accountBalance(address);
     balance.then(function(b){
       const bal = nf.format(parseFloat(window.web3.utils.fromWei(b,'ether')).toFixed(8));
-      document.getElementById("balance").innerHTML = bal;
     })
   }
    var options1 = {
@@ -365,39 +364,6 @@
                 }
             }]
     }
-
-    $.ajax({
-      type: 'GET',
-      url: roi_url,
-      dataType: 'json',
-      success: function (result) {
-        options1.series = [result.avg_daily_roi];
-        var chart = new ApexCharts(
-          document.querySelector("#chart1"),
-          options1
-        );
-        chart.render();
-        options2.series = [result.avg_weekly_roi];
-        var chart = new ApexCharts(
-          document.querySelector("#chart2"),
-          options2
-        );
-        chart.render();
-        options3.series = [result.avg_yearly_roi];
-        var chart = new ApexCharts(
-          document.querySelector("#chart3"),
-          options3
-        );
-        chart.render();
-        options4.series = [result.lifetime_roi];
-        var chart = new ApexCharts(
-          document.querySelector("#chart4"),
-          options4
-        );
-        chart.render();
-      },
-    }); 
-   
 
 $(function() {
     "use strict";

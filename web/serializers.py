@@ -1,5 +1,5 @@
 from rest_framework import serializers
-
+from .models import Reward, Account
 class _Vote:
 	def __init__(self, block_number, amount, candidate, voter):
 		self.block_number = block_number
@@ -114,11 +114,10 @@ class OwnedCandidatesSerializer(serializers.Serializer):
 		model = _OwnedCandidates
 
 class _Earnings:
-	def __init__(self, is_candidate, total_earnings, earnings, detail):
+	def __init__(self, is_candidate, total_earnings, earnings):
 		self.is_candidate=is_candidate
 		self.total_earnings=total_earnings
 		self.earnings=earnings
-		self.detail=detail
 
 class _DailyEarnings:
 	def __init__(self,date,total):
@@ -131,24 +130,12 @@ class DailyEarningsSerializer(serializers.Serializer):
 	class Meta:
 		model=_DailyEarnings
 
-class _EarningsDetails:
-	def __init__(self,account,validator,amount,epoch,block,timestamp):
-		self.account=account
-		self.validator=validator
-		self.amount=amount
-		self.epoch=epoch
-		self.block=block
-		self.timestamp=timestamp
-
-class EarningsDetailsSerializer(serializers.Serializer):
-	account=serializers.CharField(max_length=42)
-	validator=serializers.CharField(max_length=42)
-	amount=serializers.DecimalField(max_digits=99,decimal_places=18)
-	epoch=serializers.IntegerField()
-	block=serializers.IntegerField()
-	timestamp=serializers.DateTimeField()
+class EarningsDetailsSerializer(serializers.ModelSerializer):
+	candidate = serializers.StringRelatedField()
+	account = serializers.StringRelatedField()
 	class Meta:
-		model = _EarningsDetails
+		model = Reward
+		fields=['account','candidate','amount','epoch','awarded']
 
 class EarningsSerializer(serializers.Serializer):
 	is_candidate=serializers.BooleanField()

@@ -29,7 +29,6 @@ from drf_yasg import openapi
 from django.conf import settings
 import os,logging
 
-router = routers.DefaultRouter()
 api_info =   openapi.Info(
       title="Shifu API",
       default_version='v1',
@@ -52,9 +51,9 @@ urlpatterns = [
 	path('api/network_info/', api.NetworkInfoApi.as_view(), name='network_info_api'),
 	path('api/roi/<address>/', api.RoiApi.as_view(), name='roi_api'),
 	path('api/votes/<address>/', api.VotesList.as_view(), name='vote_api'),
+	path('api/earnings/details/<address>/', api.EarningsDetailsApi.as_view(), name = 'earnings_details_api'),
 	path('api/earnings/', api.EarningsApi.as_view(), name='total_earnings_api'),
 	path('api/earnings/<address>/', api.EarningsApi.as_view(), name='earnings_api'),
-	path('api/earnings/details/<address>/', api.EarningsDetailsApi.as_view(), name='earnings_details_api'),
 
 	path('profile/', login_required(views.account_profile), name='profile'),
 	path('profile/<address>/', views.account_profile, name='account_profile'),

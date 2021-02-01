@@ -20,8 +20,8 @@
                       <div class="media align-items-center">
                         <div class="w-icon"><i class="fa fa-rocket text-white"></i></div>
                         <div class="media-body ml-3 border-left-xs border-white-2">
-                          <p class="mb-0 ml-3 extra-small-font text-white">Balance</p>
-                          <h4 class="mb-0 ml-3 text-white"><span id="balance">0</span> TAO</h4>
+                          <p class="mb-0 ml-3 extra-small-font text-white">Total Earned</p>
+                          <h4 class="mb-0 ml-3 text-white"><span id="total_earned">0</span> TAO</h4>
                         </div>
                       </div>
                     </div>
@@ -213,19 +213,13 @@
                             <div class="col-lg-12">
                               <div class="card">
                                 <div class="card-header"><i class="fa fa-table"></i> Earnings</div>
-                                <div class="col-lg-12">
-                                  <span class="float-right"><button type="button" id="refresh-earnings-button" class="btn btn-inverse-secondary m-1">Refresh</button></span><span class="text"><p id="total_earned"></p></span>
-                                </div>
                                 <div class="card-body">
                                   <div class="table-responsive">
                                   <table id="earnings-table" class="table table-bordered extra-small-font">
                                     <thead>
                                         <tr>
-                                            {% if request.account.is_candidate %}
                                             <th>Account</th>
-                                            {% else %}
-                                            <th> Validator
-                                            {% endif %}
+                                            <th>Validator</th>
                                             <th>Amount</th>
                                             <th>Epoch</th>
                                             <th>Timestamp</th>
@@ -233,18 +227,6 @@
                                     </thead>
                                     <tbody>
                                     </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            {% if request.account.is_candidate %}
-                                            <th>Account</th>
-                                            {% else %}
-                                            <th> Validator
-                                            {% endif %}
-                                            <th>Amount</th>
-                                            <th>Epoch</th>
-                                            <th>Timestamp</th>
-                                        </tr>
-                                    </tfoot>
                                 </table>
                                 </div>
                                 </div>
@@ -285,10 +267,11 @@
   var url = window.location.href;
   var arr = url.split("/");
   var shifu_addr = arr[0] + "//" + arr[2]
-  var roi_url = shifu_addr + "/{% url 'roi_api' request.account.address %}";
-  var vote_url = shifu_addr + "/{% url 'vote_api' request.account.address %}";
-  var candidates_url = shifu_addr + "/{% url 'candidate_api' request.account.address %}";
-  var earnings_api = shifu_addr + "/{% url 'earnings_api' request.account.address %}";
+  var roi_url = shifu_addr + "{% url 'roi_api' request.account.address %}";
+  var vote_url = shifu_addr + "{% url 'vote_api' request.account.address %}";
+  var candidates_url = shifu_addr + "{% url 'candidate_api' request.account.address %}";
+  var earnings_api = shifu_addr + "{% url 'earnings_api' request.account.address %}";
+  var earnings_details_api = shifu_addr + "{% url 'earnings_details_api' request.account.address %}";
   var table;
   {% if not request.account.is_candidate  and request.account.is_owner %}
   table = $('#validator-table').DataTable( {
@@ -316,100 +299,122 @@
       ],
     });
     var earnings_table = $('#earnings-table').DataTable( {
-        filter:   false,
-        lengthChange: false,
-        pageLength: 10,
-        order: [[ 3, "desc" ]],
-      buttons: [ 'copy', 'excel', 'pdf', 'print' ]
-    } );
+      filter:   false,
+      lengthChange: false,
+      pageLength: 10,
+      processing: true,
+      cache: false,
+      serverSide: true,
+      ajax: {
+        url: earnings_details_api,
+       },
+      columns:[
+        { 'data': 'account',
+            render: function (data, type, row) {
+                return profile_link(data,true);
+            }
+         },
+        { 'data': 'candidate',
+            render: function (data, type, row) {
+                return profile_link(data,true);
+            }
+         },
+        { 'data': 'amount' },
+        { 'data': 'epoch' },
+        { 'data': 'awarded' },
+      ],
+     pageLength: 10,
+
+    });
     earnings_table.buttons().container()
       .appendTo( '#earnings-table_wrapper .col-md-6:eq(0)' );
 
-            var spark1 = {
-              chart: {
-                foreColor: '#e4e6eb',
-                type: 'area',
-                height: 160,
-                sparkline: {
-                  enabled: true
-                },
-              },
-              stroke: {
-                width: 2,
-                curve: 'straight'
-              },
-              fill: {
-                type: 'gradient',
-                  gradient: {
-                      shade: 'dark',
-                      {% if not request.account.is_candidate %}
-                      gradientToColors: [ '#7934f3'],
-                      {% else %}
-                      gradientToColors: [ '#2af598'],
-                      {% endif %}
-                      shadeIntensity: 1,
-                      type: 'horizontal',
-                      opacityFrom: 1,
-                      opacityTo: 1,
-                      stops: [0, 100, 100, 100]
-                  },
-              },
-              colors: ["#009efd"],
-              dataLabels: {
-                    enabled: false,
-                },
-              tooltip: {
-                  enabled: true,
-                  theme: 'dark',
-                  style: {
-                    fontSize: '12px',
-                    fontFamily: undefined
-                  },
-                  x: {
-                      show: true,
-                      format: 'dd MMM',
-                      formatter: undefined,
-                  },
-                  y: {
-                      show: true,
-                      formatter: undefined,
-                      title: {
-                          formatter: (seriesName) => seriesName,
-                      },
-                  },
-                  marker: {
-                      show: true,
-                  },
-                  fixed: {
-                      enabled: false,
-                      position: 'topRight',
-                      offsetX: 0,
-                      offsetY: 0,
-                  },
-              },
-              series: [],
-              labels: [],
-              yaxis: {
-                min: 0
-              },
-              subtitle: {
-                text: '',
-                offsetX: 0,
-                offsetY: 15,
-                style: {
-                  fontSize: '24px',
-                  cssClass: 'apexcharts-yaxis-title'
-                }
-              },
+    {% if not request.account.is_candidate %}
+    var gradient = [ '#7934f3']
+    {% else %}
+    var gradient = [ '#2af598']
+    {% endif %}
+    var spark1 = {
+      chart: {
+        foreColor: '#e4e6eb',
+        type: 'area',
+        height: 160,
+        sparkline: {
+          enabled: true
+        },
+      },
+      stroke: {
+        width: 2,
+        curve: 'straight'
+      },
+      fill: {
+        type: 'gradient',
+          gradient: {
+              shade: 'dark',
+              gradientToColors: gradient,
+              shadeIntensity: 1,
+              type: 'horizontal',
+              opacityFrom: 1,
+              opacityTo: 1,
+              stops: [0, 100, 100, 100]
+          },
+      },
+      colors: ["#009efd"],
+      dataLabels: {
+            enabled: false,
+        },
+      tooltip: {
+          enabled: true,
+          theme: 'dark',
+          style: {
+            fontSize: '12px',
+            fontFamily: undefined
+          },
+          x: {
+              show: true,
+              format: 'dd MMM',
+              formatter: undefined,
+          },
+          y: {
+              show: true,
+              formatter: undefined,
               title: {
-                text: 'Last 30 Days Earnings',
-                offsetX: 0,
-                style: {
-                  fontSize: '14px',
-                  cssClass: 'apexcharts-yaxis-title'
-                }
-              }
-            };
+                  formatter: (seriesName) => seriesName,
+              },
+          },
+          marker: {
+              show: true,
+          },
+          fixed: {
+              enabled: false,
+              position: 'topRight',
+              offsetX: 0,
+              offsetY: 0,
+          },
+      },
+      series: [],
+      labels: [],
+      yaxis: {
+        min: 0
+      },
+      subtitle: {
+        text: '',
+        offsetX: 0,
+        offsetY: 15,
+        style: {
+          fontSize: '24px',
+          cssClass: 'apexcharts-yaxis-title'
+        }
+      },
+      title: {
+        text: 'Last 30 Days Earnings',
+        offsetX: 0,
+        style: {
+          fontSize: '14px',
+          cssClass: 'apexcharts-yaxis-title'
+        }
+      }
+    };
 
     var spark1 = new ApexCharts(document.querySelector("#spark1"), spark1);
     spark1.render();
@@ -555,6 +560,7 @@ function dataRefresh(){
       });
     },
   });
+
   {% endif %}
   {% if not request.account.is_candidate %}
   const votes = [buildAccountVoteTable(account)]
@@ -605,7 +611,6 @@ function dataRefresh(){
   })
 }
 const refreshEarnings= () => {
-    $('#refresh-earnings-button').html('Refreshing...')
     $.ajax({
         type: "GET",
         url: earnings_api,
@@ -619,20 +624,12 @@ const refreshEarnings= () => {
             response.earnings.forEach(function(i,d){
               label.push(i.date + " " + nf.format(parseFloat(i.total).toFixed(4)) +" TAO");
               data.push({x:i.date,y:i.total});
+              total = total + parseFloat(i.total);
             });
-            response.detail.forEach(function(i,d){
-              {% if request.account.is_candidate %}
-              rows.push([profile_link(i.account),i.amount,i.epoch,i.timestamp]);
-              {% else %}
-              rows.push([profile_link(i.validator),i.amount,i.epoch,i.timestamp]);
-              {% endif %}
-              total = total + (i.amount*1);
-            })
-            earnings_table.clear();
-            earnings_table.rows.add(rows);
-            earnings_table.draw();
-            $('#total_earned').html('Total Earned: ' + total + ' TAO');
-            var subtitle=nf.format(parseFloat(response['total_earnings']).toFixed(8)) + " TAO";
+            console.log(response)
+            console.log(total);
+            $('#total_earned').html(nf.format(parseFloat(response['total_earnings'],'ether')));
+            var subtitle=nf.format(parseFloat(total).toFixed(8)) + " TAO";
             options = {
                 labels: label,
                 subtitle: {
@@ -650,17 +647,45 @@ const refreshEarnings= () => {
                 data: data,
               }];
             spark1.updateSeries(series);
-            $('#refresh-earnings-button').html('Refresh');
 
         }
     });  
 }
 $(function() {
     "use strict";
+  $.ajax({
+    type: 'GET',
+    url: roi_url,
+    dataType: 'json',
+    success: function (result) {
+      options1.series = [result.avg_daily_roi];
+      var chart = new ApexCharts(
+        document.querySelector("#chart1"),
+        options1
+      );
+      chart.render();
+      options2.series = [result.avg_weekly_roi];
+      var chart = new ApexCharts(
+        document.querySelector("#chart2"),
+        options2
+      );
+      chart.render();
+      options3.series = [result.avg_yearly_roi];
+      var chart = new ApexCharts(
+        document.querySelector("#chart3"),
+        options3
+      );
+      chart.render();
+      options4.series = [result.lifetime_roi];
+      var chart = new ApexCharts(
+        document.querySelector("#chart4"),
+        options4
+      );
+      chart.render();
+    },
+  }); 
+ 
     const x = refreshEarnings()
-    $('#refresh-earnings-button').on('click',function(){
-      refreshEarnings()
-    });
     const _v = [dataRefresh()];
     var i = setInterval(function() {
       dataRefresh();

@@ -48,8 +48,12 @@ $( document ).ready(function() {
 function gravatar_uri(address,size){
   return 'https://secure.gravatar.com/avatar/' + md5(address) +'.jpg?s='+size+'&d=identicon&r=g';
 }
-function profile_link(address){
-	return '<a href="/profile/' + address + '" data-toggle="tooltip" title="Click here for more information."><span class="user-profile" style="padding-right:5px;"><img src="' + gravatar_uri(address,24) + '" alt="profile-image" class="gravatar" ></span>' + address + '</a>'
+function profile_link(address,trim){
+  if (trim){
+    return '<a href="/profile/' + address + '" data-toggle="tooltip" title="Click here for more information."><span class="user-profile" style="padding-right:5px;"><img src="' + gravatar_uri(address,24) + '" alt="profile-image" class="gravatar" ></span>' + address.substring(0,6) + '...' + address.substring(36) + '</a>'
+  } else {
+    return '<a href="/profile/' + address + '" data-toggle="tooltip" title="Click here for more information."><span class="user-profile" style="padding-right:5px;"><img src="' + gravatar_uri(address,24) + '" alt="profile-image" class="gravatar" ></span>' + address + '</a>'
+  }
 }
 String.prototype.capitalize = function() {
   x = this.toLowerCase();

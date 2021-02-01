@@ -54,10 +54,13 @@ BLOCKS_TO_WITHDRAW_VOTE = 86400
 ###
 # RESTful API Settings
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
-###
 
 MANAGERS = ADMINS
 
@@ -75,7 +78,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'web',
-    'corsheaders',    
+    'corsheaders', 
 ]
 
 MIDDLEWARE = [
@@ -153,11 +156,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
-}
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/

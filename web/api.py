@@ -18,25 +18,15 @@ from rest_framework import response, schemas
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.core.serializers import serialize
-from rest_framework import status
+from rest_framework import status, generics, viewsets
 from rest_framework.reverse import reverse
-
-from web.serializers import _Vote, _Roi, _Earnings, _DailyEarnings, _EarningsDetails, _NetworkInfo, _OwnedCandidates, _OwnedCandidate, _Candidate, _AllCandidates
+from rest_framework.pagination import PageNumberPagination
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from web.serializers import _Vote, _Roi, _Earnings, _DailyEarnings, _NetworkInfo, _OwnedCandidates, _OwnedCandidate, _Candidate, _AllCandidates
 import logging
 
 log = logging.getLogger(__name__)
-#
-#class EarningsPagination(pagination.PageNumberPagination):
-#    def get_paginated_response(self, data):
-#        return Response({
-#            'links': {
-#                'next': self.get_next_link(),
-#                'previous': self.get_previous_link()
-#            },
-#            'count': self.page.paginator.count,
-#            'results': data
-#        })
-#
+
 class VotesList(APIView):
 	"""
 	Returns the current votes for an account
@@ -195,6 +185,7 @@ class EarningsApi(APIView):
 			'earnings':[],
 		}
 		daily_earnings = []
+		total_earnings = 0
 		while date_to_calculate <= pytz.utc.localize(datetime.today() - timedelta(days=1)):
 			total_awarded_by_day = epoch_rewards.filter(awarded__year=date_to_calculate.year,
 										   awarded__month=date_to_calculate.month,
@@ -205,8 +196,8 @@ class EarningsApi(APIView):
 				total=total_awarded_by_day['total'] if total_awarded_by_day['total'] is not None else 0
 			))
 			date_to_calculate = date_to_calculate + timedelta(days=1)
+			total_earnings+=total_awarded_by_day['total'] if total_awarded_by_day['total'] is not None else 0
 			daily_earnings.append(s.data)
-
 		serializer = EarningsSerializer(_Earnings(
 			is_candidate=account.is_candidate if account is not None else False,
 			total_earnings=total_earnings,
@@ -214,40 +205,52 @@ class EarningsApi(APIView):
 		))
 		return Response(serializer.data)
 
-class EarningsDetailsApi(APIView):
-	"""
-	Details for earnings for a specified account or validator
-	"""
+class EarningsPagination(PageNumberPagination):
+	page_size=10
+	draw=1
+	def get_paginated_response(self, data):
+		return Response({
+			'draw': self.draw,
+			'recordsFiltered': self.page.paginator.count,
+			'recordsTotal': self.page.paginator.count,
+			'data': data
+		})
+
+class EarningsDetailsApi(generics.ListAPIView):
+	queryset = Reward.objects
+	serializer_class=EarningsDetailsSerializer
+
 	def get(self,request,address):
+		"""
+		Details for earnings for a specified account or validator
+		"""
 		epoch_rewards = None
 		account=None
-		start_time=pytz.utc.localize(datetime.now())
-		start_time = pytz.utc.localize(datetime.today() - timedelta(days=30))
-		date_to_calculate = start_time
-
 		if address is not None:
 			account = Account.objects.get(address__iexact=address)
 			if account.is_candidate:
-				epoch_rewards = Reward.objects.filter(candidate=account).order_by('-awarded')
+				epoch_rewards = Reward.objects.select_related('account').filter(candidate=account).order_by('-awarded')
 			else:
-				epoch_rewards = Reward.objects.filter(account=account).order_by('-awarded')
+				epoch_rewards = Reward.objects.select_related('candidate').filter(account=account).order_by('-awarded')
 		else:
-			epoch_rewards = Reward.objects.order_by('-awarded')
-		detail = []
-		total_earnings = 0
-		for reward in epoch_rewards:
-			total_earnings += reward.amount
-			if address is not None:
-				s = EarningsDetailsSerializer(_EarningsDetails(
-					account=reward.account.address,
-					validator=reward.candidate.address,
-					amount=reward.amount,
-					epoch=reward.epoch.number,
-					block=reward.epoch.block_number,
-					timestamp=reward.awarded,
-				))
-				detail.append(s.data)
+			epoch_rewards = Reward.objects.select_related('account','candidate').order_by('-awarded')
 
+		paginator = EarningsPagination()
+		page = request.GET.get('page')
+		if page is None:
+			# now you can edit it
+			start = request.GET.get('start')
+			page = (int(start) // 10) + 1
+		else:
+			page = int(page)
+		if not request.GET._mutable:
+		   request.GET._mutable = True
+		request.GET['page'] = page
+		paginator.draw = page
+		epoch_rewards = paginator.paginate_queryset(epoch_rewards, request)
+
+		serializer = EarningsDetailsSerializer(epoch_rewards,many=True)
+		return paginator.get_paginated_response(serializer.data)
 
 class OwnedCandidatesApi(APIView):
 	def get(self,request,address):

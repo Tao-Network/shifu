@@ -73,7 +73,9 @@ class Account(models.Model):
 	def is_owner(self):
 		return self.candidates_owned.count() > 0
 	
-
+	def __str__(self):
+	        return self.address
+        
 class Epoch(models.Model):
 	number 			= models.AutoField(primary_key=True)
 	block_number 	= models.IntegerField(default=0)
