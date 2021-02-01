@@ -47,11 +47,15 @@ MAX_RETRIES = 10
 ADMINS = (
     ('Admin', 'admin@tao.network')
 )
-
+BLOCK_TIME = 5 # in seconds
+BLOCKS_PER_DAY = (24 * 60 *60) // BLOCK_TIME
+BLOCKS_TO_WITHDRAW_VALIDATOR = 1296000
+BLOCKS_TO_WITHDRAW_VOTE = 86400
 ###
 # RESTful API Settings
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
 }
 ###
 

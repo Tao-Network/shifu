@@ -53,8 +53,6 @@ def createAccount(address,is_candidate,block_number):
 	log.debug('create account {0}'.format(address))
 	if address is None:
 		return None, False
-	Account.objects.update()
-	#log.info('create account {0}'.format(address))
 	a, created = Account.objects.get_or_create(address=address, defaults={
 				'is_candidate':is_candidate,
 				'address':address,
@@ -86,7 +84,24 @@ def createCandidate(candidate,c,block_number,e):
 			'epoch':e,
 		})			
 	if c is not None:
-		cs.status = c['status']		
+		if cs.status is None:
+			status, created = Status.objects.get_or_create(
+				candidate=validator,
+				status=c['status'],
+				block_number=block_number,
+				timestamp=e.timestamp
+				)
+			if created:
+				status.save()
+		if cs.status != c['status']:
+			status, created = Status.objects.get_or_create(
+				candidate=validator,
+				status=c['status'],
+				block_number=block_number,
+				timestamp=e.timestamp
+				)
+			if created:
+				status.save()
 		cs.block_number = block_number
 		cs.save()
 	return cs,created
@@ -112,19 +127,18 @@ def createVote(_vote,vote,block_number,e,unvote=False):
 
 def Sync(block_number, current_block, block):
 	log.info('Sync started.')
-	log.debug('get all candidates')
+	log.info('Processing candidates.')
 	candidates = getCandidates()
 	epoch_number,e,created = createEpoch(block_number,block)
 	for candidate in candidates['candidates']:
 		c = candidates['candidates'][candidate]
-		candidate = rpc.toChecksumAddress(candidate)
 		log.debug(c)
 		createCandidate(candidate,c,block_number,e)
 
-	log.debug('vote filter')
+	log.info('Processing vote events')
 	ProcessVoteFilter(block_number,False)
 
-	log.debug('filter unvote')
+	log.info('Processing unvote events')
 	ProcessVoteFilter(block_number,True)
 
 	while block_number < current_block:
@@ -159,7 +173,6 @@ def ProcessBlock(block_number):
 	candidates = getCandidates()
 	for candidate in candidates['candidates']:
 		c = candidates['candidates'][candidate]
-		candidate = rpc.toChecksumAddress(candidate)
 		log.debug(c)
 		createCandidate(candidate,c,block_number,e)
 
@@ -182,27 +195,32 @@ def ProcessEpoch(block_number):
 
 	if not 'rewards' in rewards:
 		return None
-
-	for candidate in rewards['rewards']:
-		log.debug(candidate)
+	signer_checksum = 0
+	reward_checksum = 0
+	for candidate in rewards['signers']:
 		candidate = rpc.toChecksumAddress(candidate)
 		validator,created = createAccount(candidate,True,block_number)
-
-		rs = rewards['rewards'][candidate.lower()]
-		found_owner = False
-		log.debug(rs)
-		for voter in rs:
-			log.debug('voter {0}'.format(voter))
-			voter = rpc.toChecksumAddress(voter)
-			vo,created = createAccount(voter,False,block_number)
-			log.debug('creating {0}'.format(voter))
-			r ,created= Reward.objects.get_or_create(account=vo,epoch=e,defaults={
-					'account': vo,
+		signer_reward = from_wei(rewards['signers'][candidate.lower()]['reward'],'ether')
+		signer, created = Signers.objects.get_or_create(account=validator,epoch=e, defaults={
+				'account': validator,
+				'epoch': e,
+				'sign':rewards['signers'][candidate.lower()]['sign'],
+				'awarded':e.timestamp,
+				'amount':signer_reward,
+			})
+		if created:
+			signer.save()
+		for account in rewards['rewards'][candidate.lower()]:
+			account = rpc.toChecksumAddress(account)
+			voter,created = createAccount(account,False,block_number)
+			reward_amount = from_wei(rewards['rewards'][candidate.lower()][account.lower()],'ether')
+			r ,created= Reward.objects.get_or_create(account=voter,epoch=e,candidate=validator,defaults={
+					'account': voter,
 					'epoch': e,
 					'candidate': validator,
 					'awarded':pytz.utc.localize(datetime.fromtimestamp(float(block.timestamp))),
-					'amount':from_wei(rs[voter.lower()],'ether')
+					'amount':reward_amount,
 				})
-			r.save()
+			reward_checksum += reward_amount
 			if created:
-				log.debug("created")
+				r.save()

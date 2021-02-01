@@ -25,7 +25,18 @@ from web.serializers import _Vote, _Roi, _Earnings, _DailyEarnings, _EarningsDet
 import logging
 
 log = logging.getLogger(__name__)
-
+#
+#class EarningsPagination(pagination.PageNumberPagination):
+#    def get_paginated_response(self, data):
+#        return Response({
+#            'links': {
+#                'next': self.get_next_link(),
+#                'previous': self.get_previous_link()
+#            },
+#            'count': self.page.paginator.count,
+#            'results': data
+#        })
+#
 class VotesList(APIView):
 	"""
 	Returns the current votes for an account
@@ -34,7 +45,7 @@ class VotesList(APIView):
 	"""
 	def get(self, request, address, format=None):
 		config = Crawler.objects.get(id=0)
-		block_number = config.block_number
+		block_number = config.block_number - 1
 		epoch = block_number // settings.BLOCKS_PER_EPOCH
 		try:
 			account = Account.objects.get(address=address)
@@ -65,7 +76,7 @@ class RoiApi(APIView):
 		There are 48 epochs in a day, 7 days in a week, 52 weeks in a year. ROI is calculated as (Earnings / 48) * Timeframe.
 		"""
 		config = Crawler.objects.get(id=0)
-		block_number = config.block_number
+		block_number = config.block_number - 1
 		epoch = block_number // settings.BLOCKS_PER_EPOCH
 		profile = calculateROI(address)
 		serializer = RoiSerializer(_Roi(
@@ -91,8 +102,7 @@ class NetworkInfoApi(APIView):
 		Get network information
 		"""
 		config = Crawler.objects.get(id=0)
-		block_number = config.block_number
-
+		block_number = config.block_number - 1
 		block = rpc.eth.getBlock(block_number)
 		epoch = block_number // settings.BLOCKS_PER_EPOCH
 
@@ -104,7 +114,7 @@ class NetworkInfoApi(APIView):
 		current_voters = 0
 
 		validators = Validator.objects.all()
-		current_validators = validators.filter(~Q(status='RESIGNED')).count() - (len(network_validators) + 2)
+		current_validators = 0 
 		voters = Vote.objects.filter(amount__gt=0).distinct('account')
 		current_voters = voters.count()
 		current_participants = current_validators + current_voters
@@ -119,36 +129,22 @@ class NetworkInfoApi(APIView):
 		for validator in validators:
 			address=validator.candidate.address
 			if not any(address.lower() in d for d in known_accounts) and not (address.lower() in network_validators):
-				rewards = Reward.objects.filter(candidate=validator.candidate)
-				reward_total = rewards.aggregate(reward_total=Sum('amount'))
-				stake = Vote.objects.filter(candidate=validator.candidate)
-				stake_total = stake.aggregate(stake_total=Sum('amount'))
-				signed = Signers.objects.filter(account=validator.candidate)
-				signed_total = signed.aggregate(signed_total=Sum('amount'))
-				total_validator_reward = 0
-				total_voter_reward = 0
-				voter_reward = 0
+				current_validators += 1
+				v_roi = calculateROI(validator.candidate.address)
+				reward_total = float(v_roi['earnings'])
+				stake_total = float(v_roi['locked'])
 
-				if reward_total['reward_total'] is not None:
-					total_voter_reward += reward_total['reward_total']
-				if stake_total['stake_total'] == None:
-					stake_total=0
-				else:
-					stake_total = float(stake_total['stake_total'])
-				total_locked += stake_total
-				total_reward +=  total_validator_reward + total_voter_reward
+				total_reward += reward_total
 
 				if stake_total > 0:
-					voter_roi = (float(total_voter_reward) / stake_total)
+					voter_roi = (float(total_reward) / stake_total)
 				else:
 					voter_roi = 0
 				voter_avg_roi.append(float(voter_roi))
 
-				v_roi = calculateROI(validator.candidate.address)
 				validator_avg_roi.append(float(v_roi['lifetime_roi']))
 
-
-		total_locked += float(100000) * float(current_validators)
+				total_locked += stake_total
 
 		if len(voter_avg_roi) > 0:
 			voter_avg = float(sum(voter_avg_roi)) / float(len(voter_avg_roi))
@@ -260,7 +256,7 @@ class AllCandidatesApi(APIView):
 		Get all validators
 		"""
 		config = Crawler.objects.get(id=0)
-		block_number = config.block_number
+		block_number = config.block_number - 1
 
 		block = getBlock(block_number)
 		epoch = block.number // settings.BLOCKS_PER_EPOCH

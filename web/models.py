@@ -80,6 +80,16 @@ class Epoch(models.Model):
 	timestamp 		= models.DateTimeField()
 	created 		= models.DateTimeField(blank=True,default=None,null=True)
 
+class Status(models.Model):
+	candidate 		=  models.ForeignKey(
+		'Account',
+		on_delete=models.CASCADE,
+		default=None, blank=True, null=True, db_index=True
+	)
+	status 			= models.CharField(max_length=10,blank=True,default=None,null=True)
+	block_number 	= models.IntegerField(default=0,db_index=True)
+	timestamp 		= models.DateTimeField(auto_now_add=True)
+
 class Validator(models.Model):
 	candidate 		=  models.ForeignKey(
 		'Account',
@@ -89,7 +99,6 @@ class Validator(models.Model):
 	capacity 		= models.DecimalField(default=0,max_digits=99,decimal_places=18)
 	created 		= models.DateTimeField(blank=True,default=None,null=True)
 	last_seen 		= models.DateTimeField(auto_now_add=True)
-	status 			= models.CharField(max_length=10,blank=True,default=None,null=True)
 	first_block 	= models.IntegerField(default=0)
 	block_number 	= models.IntegerField(default=0)
 	epoch 			=  models.ForeignKey(
@@ -97,6 +106,19 @@ class Validator(models.Model):
 		on_delete=models.CASCADE,
 		default=None, blank=True, null=True
 	)
+
+	@property
+	def status_history(self):
+		return Status.objects.filter(candidate=self.candidate).order_by('-block_number')
+
+	@property
+	def status(self):
+		status = self.status_history.first()
+		if status is None:
+			return None
+		else:
+			return status.status
+
 
 class Vote(models.Model):
 	account =  models.ForeignKey(
@@ -140,7 +162,7 @@ class Reward(models.Model):
 		default=None, blank=True, null=True, db_index=True,
 	)
 	class Meta:
-		index_together = ("account", "epoch",)
+		index_together = ("account", "epoch","candidate")
 
 class Signers(models.Model):
 	account 		=  models.ForeignKey(

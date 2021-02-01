@@ -158,7 +158,7 @@ def calculateROI(address):
 		return None
 	from .models import Crawler, Account, Reward, Vote 
 	config = Crawler.objects.get(id=0)
-	block_number = config.block_number
+	block_number = config.block_number - 1
 
 	block = rpc.eth.getBlock(block_number)
 	epoch = block_number // settings.BLOCKS_PER_EPOCH
