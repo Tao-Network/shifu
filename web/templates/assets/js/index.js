@@ -34,15 +34,19 @@ const accountBalance = async (address) => {
 
 
 $( document ).ready(function() {
-  window.ethereum.on('chainChanged', chainId => {
-    location.reload();
-  })  
-  web3.eth.net.getId()
-    .then(function(network_id){
-      if (network_id != 558){
-        $('#btnNetworkTrigger').click();
-      }
-  })
+  if (window.ethereum) {
+    window.ethereum.on('chainChanged', chainId => {
+      location.reload();
+    })  
+    web3.eth.net.getId()
+      .then(function(network_id){
+        if (network_id != 558){
+          $('#btnNetworkTrigger').click();
+        }
+    })
+  } else {
+    $('#button-login').hide();
+  }
   $('[data-toggle="tooltip"]').tooltip();
 });
 function gravatar_uri(address,size){

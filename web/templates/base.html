@@ -452,7 +452,7 @@
       <a href="javascript:void()" class="btn-social btn-social-circle btn-telegram waves-effect waves-light m-1"><i class="fa fa-telegram"></i></a>
     </li>
     {% if not request.user.is_authenticated %}
-    <li class="nav-item">
+    <li class="nav-item" id="button-login">
       <a href="{% url 'autologin' %}" class="btn-social-text btn-google-plus waves-effect waves-light m-1"><i class="zmdi zmdi-power"></i> <span>Login with MetaMask</span></a>
     </li>
     {% else %}
