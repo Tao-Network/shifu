@@ -282,10 +282,13 @@
 
 
 <script>
-  var shifu_addr = "http://localhost:9000";
-  var roi_url = shifu_addr + "/api/roi/{{ request.account.address }}/";
-  var vote_url = shifu_addr + "/api/votes/{{ request.account.address }}/";
-  var candidates_url = shifu_addr + "/api/candidates/{{ request.account.address }}/";
+  var url = window.location.href;
+  var arr = url.split("/");
+  var shifu_addr = arr[0] + "//" + arr[2]
+  var roi_url = shifu_addr + "/{% url 'roi_api' request.account.address %}";
+  var vote_url = shifu_addr + "/{% url 'vote_api' request.account.address %}";
+  var candidates_url = shifu_addr + "/{% url 'candidate_api' request.account.address %}";
+  var earnings_api = shifu_addr + "/{% url 'earnings_api' request.account.address %}";
   var table;
   {% if not request.account.is_candidate  and request.account.is_owner %}
   table = $('#validator-table').DataTable( {
@@ -605,7 +608,7 @@ const refreshEarnings= () => {
     $('#refresh-earnings-button').html('Refreshing...')
     $.ajax({
         type: "GET",
-        url: "{% url 'earnings_api' request.account.address %}",
+        url: earnings_api,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function (response) {
@@ -662,7 +665,7 @@ $(function() {
     var i = setInterval(function() {
       dataRefresh();
     }, 10000);
-    $(".se-pre-con").fadeOut("slow");        
+    $(".se-pre-con").fadeOut("fast");        
 });
 
 </script>

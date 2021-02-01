@@ -154,6 +154,5 @@ class EarningsSerializer(serializers.Serializer):
 	is_candidate=serializers.BooleanField()
 	total_earnings=serializers.DecimalField(max_digits=99,decimal_places=18)
 	earnings=serializers.ListField()
-	detail=serializers.ListField()
 	class Meta:
 		model = _Earnings

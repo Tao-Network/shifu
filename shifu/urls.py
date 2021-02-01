@@ -47,16 +47,17 @@ schema_view = get_schema_view(
 
 urlpatterns = [
 	path('admin/', admin.site.urls),
-	path('api/candidates/', api.AllCandidatesApi.as_view()),
-	path('api/candidates/<address>/', api.OwnedCandidatesApi.as_view()),
-	path('api/network_info/', api.NetworkInfoApi.as_view()),
-	path('api/roi/<address>/', api.RoiApi.as_view()),
-	path('api/votes/<address>/', api.VotesList.as_view()),
+	path('api/candidates/', api.AllCandidatesApi.as_view(), name='all_candidates_api'),
+	path('api/candidates/<address>/', api.OwnedCandidatesApi.as_view(), name='candidate_api'),
+	path('api/network_info/', api.NetworkInfoApi.as_view(), name='network_info_api'),
+	path('api/roi/<address>/', api.RoiApi.as_view(), name='roi_api'),
+	path('api/votes/<address>/', api.VotesList.as_view(), name='vote_api'),
 	path('api/earnings/', api.EarningsApi.as_view(), name='total_earnings_api'),
 	path('api/earnings/<address>/', api.EarningsApi.as_view(), name='earnings_api'),
+	path('api/earnings/details/<address>/', api.EarningsDetailsApi.as_view(), name='earnings_details_api'),
 
 	path('profile/', login_required(views.account_profile), name='profile'),
-	path('profile/<address>/', views.account_profile, name='profile'),
+	path('profile/<address>/', views.account_profile, name='account_profile'),
 
 	re_path(r'^login_api/$', auth.login_api, name='web3_login_api'),
 	re_path(r'^logout/', views.logout_view, name='logout'),

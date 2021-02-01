@@ -193,22 +193,7 @@ class EarningsApi(APIView):
 			'is_candidate': account.is_candidate if account is not None else False,
 			'total_earnings': 0,
 			'earnings':[],
-			'detail':[],
 		}
-		detail = []
-		total_earnings = 0
-		for reward in epoch_rewards:
-			total_earnings += reward.amount
-			if address is not None:
-				s = EarningsDetailsSerializer(_EarningsDetails(
-					account=reward.account.address,
-					validator=reward.candidate.address,
-					amount=reward.amount,
-					epoch=reward.epoch.number,
-					block=reward.epoch.block_number,
-					timestamp=reward.awarded,
-				))
-				detail.append(s.data)
 		daily_earnings = []
 		while date_to_calculate <= pytz.utc.localize(datetime.today() - timedelta(days=1)):
 			total_awarded_by_day = epoch_rewards.filter(awarded__year=date_to_calculate.year,
@@ -226,9 +211,43 @@ class EarningsApi(APIView):
 			is_candidate=account.is_candidate if account is not None else False,
 			total_earnings=total_earnings,
 			earnings=daily_earnings,
-			detail=detail,
 		))
 		return Response(serializer.data)
+
+class EarningsDetailsApi(APIView):
+	"""
+	Details for earnings for a specified account or validator
+	"""
+	def get(self,request,address):
+		epoch_rewards = None
+		account=None
+		start_time=pytz.utc.localize(datetime.now())
+		start_time = pytz.utc.localize(datetime.today() - timedelta(days=30))
+		date_to_calculate = start_time
+
+		if address is not None:
+			account = Account.objects.get(address__iexact=address)
+			if account.is_candidate:
+				epoch_rewards = Reward.objects.filter(candidate=account).order_by('-awarded')
+			else:
+				epoch_rewards = Reward.objects.filter(account=account).order_by('-awarded')
+		else:
+			epoch_rewards = Reward.objects.order_by('-awarded')
+		detail = []
+		total_earnings = 0
+		for reward in epoch_rewards:
+			total_earnings += reward.amount
+			if address is not None:
+				s = EarningsDetailsSerializer(_EarningsDetails(
+					account=reward.account.address,
+					validator=reward.candidate.address,
+					amount=reward.amount,
+					epoch=reward.epoch.number,
+					block=reward.epoch.block_number,
+					timestamp=reward.awarded,
+				))
+				detail.append(s.data)
+
 
 class OwnedCandidatesApi(APIView):
 	def get(self,request,address):
