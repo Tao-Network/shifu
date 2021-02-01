@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 start_block = 3224520
 def Start():
 	config, created = Crawler.objects.get_or_create(id=0,defaults={'block_number': start_block},)
-	log.warning('*** Crawler started')
+	log.info('*** Crawler started')
 	one_day = 48 * settings.BLOCKS_PER_EPOCH
 	while True:
 		current=getBlock('latest')
@@ -29,12 +29,13 @@ def Start():
 			block_number = Sync(start_block,current.number,current)
 			config.block_number = block_number
 			config.save()
+			log.info('Catching up...')
 		if config.block_number <= current.number:
-			config.block_number = config.block_number + 1
-			config.save()
 			ProcessBlock(config.block_number)
 			if (config.block_number % settings.BLOCKS_PER_EPOCH == 0):
 				ProcessEpoch(config.block_number)
+			config.block_number = config.block_number + 1
+			config.save()
 
 def createEpoch(block_number,block):
 	epoch_number =  block_number // settings.BLOCKS_PER_EPOCH
@@ -53,7 +54,7 @@ def createAccount(address,is_candidate,block_number):
 	if address is None:
 		return None, False
 	Account.objects.update()
-	#log.warning('create account {0}'.format(address))
+	#log.info('create account {0}'.format(address))
 	a, created = Account.objects.get_or_create(address=address, defaults={
 				'is_candidate':is_candidate,
 				'address':address,
@@ -110,7 +111,7 @@ def createVote(_vote,vote,block_number,e,unvote=False):
 	return v, created
 
 def Sync(block_number, current_block, block):
-	log.warning('Sync started.')
+	log.info('Sync started.')
 	log.debug('get all candidates')
 	candidates = getCandidates()
 	epoch_number,e,created = createEpoch(block_number,block)
@@ -129,7 +130,7 @@ def Sync(block_number, current_block, block):
 	while block_number < current_block:
 		ProcessEpoch(block_number)
 		block_number += settings.BLOCKS_PER_EPOCH
-	log.warning('Sync complete.')
+	log.info('Sync complete.')
 	return block_number - settings.BLOCKS_PER_EPOCH
 
 def ProcessVoteFilter(block_number,is_unvote):
@@ -149,7 +150,7 @@ def ProcessVoteFilter(block_number,is_unvote):
 		vote, created = createVote(_vote,vote,block_number,e,is_unvote)
 
 def ProcessBlock(block_number):
-	log.warning('Processing Block #{0}'.format(int(block_number) ))
+	log.info('Processing Block #{0}'.format(int(block_number) ))
 	block = getBlock(block_number)
 	log.debug('create eopch')
 	epoch_number,e,created = createEpoch(block_number,block)
@@ -172,7 +173,7 @@ def ProcessBlock(block_number):
 def ProcessEpoch(block_number):
 	block = getBlock(block_number)
 	epoch_number,e,created = createEpoch(block_number,block)
-	log.warning('Processing Epoch #{0}'.format(int(epoch_number)))
+	log.info('Processing Epoch #{0}'.format(int(epoch_number)))
 
 	rewards = getRewardsByHash(to_hex(block.hash))
 

@@ -48,8 +48,8 @@ services:
     command: bash -c "gunicorn shifu.wsgi:application --bind 0.0.0.0:9000"
     volumes:
       - .:/code
-    expose:
-      - 9000
+    ports:
+      - "9000:9000"
     restart: "unless-stopped"
     environment:
       - POSTGRES_USERNAME=${POSTGRES_USERNAME}

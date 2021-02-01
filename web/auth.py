@@ -104,9 +104,7 @@ def login_api(request):
 						user.account = account
 						return JsonResponse({'success': True, 'redirect_url': get_redirect_url(request)})
 					else:
-						print('not user')
 						return JsonResponse({'success': False, 'error': json.loads(form.errors.as_json())})
 			else:
-				print('form not valid')
 				return JsonResponse({'success': False, 'error': json.loads(form.errors.as_json())})
 
