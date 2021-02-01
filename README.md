@@ -1,6 +1,8 @@
 # shifu
 The Tao Governance dApp
 
+## This is currently in beta. Use at your own risk.
+
 Uses python, Django, and Postgres
 
 ## Sample .env
