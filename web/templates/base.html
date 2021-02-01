@@ -93,6 +93,28 @@
 
 
 <body class="bg-theme bg-theme2">
+                <div class="modal fade" id="dangermodal" style="display: block;" aria-modal="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-danger">
+                      <div class="modal-header bg-danger">
+                        <h5 class="modal-title text-white">WARNING - THIS SOFTARE IS IN BETA</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">×</span>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <p>This platform is currently in beta testing. Your funds are safe in your MetaMask wallet or in the smart contract. There's zero chance of loss of funds due to a malfunction of the website. User error is always possible.</p>
+                        <p>The interface may behave oddly at times. Thank you for your patience!  You have been warned.</p>
+                        <p>
+                        Happy staking!</p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal" id="danger-close"><i class="fa fa-times"></i> Continue</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
   <div class="se-pre-con"></div>
       <div class="modal fade" id="waitingmodal" style="display: none;" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -649,7 +671,8 @@
     <a href="javaScript:void();" class="back-to-top"><i class="fa fa-angle-double-up"></i> </a>
 
     <!--End Back To Top Button-->
-                <button class="btn btn-primary btn-lg" id="btnNetworkTrigger" data-toggle="modal" data-target="#networkmodal">
+                <button class="btn btn-primary btn-lg hide" id="btnNetworkTrigger" data-toggle="modal" data-target="#networkmodal">
+                <button class="btn btn-primary btn-lg hidden" id="btnBetaTrigger" data-toggle="modal" data-target="#dangermodal">
 
 
   </div><!--End wrapper-->
@@ -808,6 +831,16 @@ $( document ).ready(function() {
     });
 
   });
+  if(localStorage.getItem('popState') != 'shown'){
+      $('#btnBetaTrigger').click();
+      localStorage.setItem('popState','shown')
+  }
+
+  //$('#danger-close, #dangermodal').click(function() // You are clicking the close button
+  //{
+  //    $('#dangermodal').hide(); // Now the pop up is hidden.
+  //});
+
 });
 </script>
 {% endblock javascript %}
