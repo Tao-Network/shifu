@@ -71,6 +71,9 @@
     function login(){
       web3.eth.getAccounts().then(function(accounts){
         from = accounts[0]
+        if (from == undefined){
+
+        }
         window.web3.eth.personal.sign(signature,from,(error, signature) => {
           if (error) {
             window.location.replace(domain);
