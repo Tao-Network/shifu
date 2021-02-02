@@ -182,7 +182,6 @@ def calculateROI(address):
 		rewards = Reward.objects.filter(account=account)
 	if account.is_owner:
 		staked += (account.candidates_owned.count() * 100000)
-	rewards = Reward.objects.filter(account=account)
 	votes = Vote.objects.filter(account=account)
 
 	stake_total = votes.aggregate(total=Sum('amount'))
