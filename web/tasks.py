@@ -132,7 +132,6 @@ def Sync(block_number, current_block, block):
 	epoch_number,e,created = createEpoch(block_number,block)
 	for candidate in candidates['candidates']:
 		c = candidates['candidates'][candidate]
-		log.debug(c)
 		createCandidate(candidate,c,block_number,e)
 
 	log.info('Processing vote events')
@@ -173,8 +172,11 @@ def ProcessBlock(block_number):
 	candidates = getCandidates()
 	for candidate in candidates['candidates']:
 		c = candidates['candidates'][candidate]
-		log.debug(c)
-		createCandidate(candidate,c,block_number,e)
+		cs,created=createCandidate(candidate,c,block_number,e)
+		# sanity check
+		if not cs.candidate.is_candidate:
+			cs.candidate.is_candidate = True
+			cs.candidate.save()
 
 	log.debug('vote filter')
 	ProcessVoteFilter(block_number,False)
