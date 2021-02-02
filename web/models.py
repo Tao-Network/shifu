@@ -120,10 +120,12 @@ class Validator(models.Model):
 			return None
 		else:
 			return status.status
-			
+
 	@property
 	def roi(self):
-		return calculateROI(self.address)
+		from web.helpers import calculateROI
+		roi = calculateROI(self.candidate.address)
+		return roi
 	
 
 class Vote(models.Model):

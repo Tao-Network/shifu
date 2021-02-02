@@ -175,14 +175,15 @@ def calculateROI(address):
 
 	#try:
 	account = Account.objects.get(address__iexact=address)
-	is_candidate = account.is_candidate
-	if is_candidate:
+	if account.is_candidate:
 		rewards = Reward.objects.filter(candidate=account)
+		votes = Vote.objects.filter(candidate=account)
+		staked += 100000
 	else:
 		rewards = Reward.objects.filter(account=account)
-	if account.is_owner:
-		staked += (account.candidates_owned.count() * 100000)
-	votes = Vote.objects.filter(account=account)
+		votes = Vote.objects.filter(account=account)
+		if account.is_owner:
+			staked += (account.candidates_owned.count() * 100000)
 
 	stake_total = votes.aggregate(total=Sum('amount'))
 	if stake_total['total'] is None:
@@ -216,12 +217,11 @@ def calculateROI(address):
 		avg_monthly_roi = 0
 		lifetime_roi = 0
 
-
-	return {
+	data = {
 		"timestamp" : datetime.now(),
 		"block" : block_number,
 		"epoch" : epoch,
-		"is_candidate" : is_candidate,
+		"is_candidate" : account.is_candidate,
 		"locked" : staked,
 		"earnings" : earnings,
 		"avg_daily_roi" : "{:.2f}".format(avg_daily_roi),
@@ -230,6 +230,7 @@ def calculateROI(address):
 		"avg_yearly_roi" : "{:.2f}".format(avg_yearly_roi),
 		"lifetime_roi" : "{:.2f}".format(lifetime_roi),
 		}
+	return 	data
 	#except:
 	#	return Http404()
 

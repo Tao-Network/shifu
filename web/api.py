@@ -302,14 +302,12 @@ class AllCandidatesApi(APIView):
 				r = Reward.objects.filter(epoch=last_epoch,candidate=candidate.candidate)
 				voters = Vote.objects.filter(amount__gt=0,candidate=candidate.candidate)
 				voter_count = voters.distinct('account').count()
-
-				roi = calculateROI(candidate.candidate.address)
 				c=CandidateSerializer(_Candidate(
 					rank=rank,
 					address=candidate.candidate.address,
 					status=candidate.status,
 					voters=voter_count,
-					roi=float(roi['lifetime_roi']),
+					roi=float(candidate.roi['lifetime_roi']),
 					))
 				if c.data['status'] == 'SLASHED' or c.data['status'] == 'RESIGNED':
 					offline.append(c.data)
