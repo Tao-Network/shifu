@@ -295,32 +295,14 @@ class AllCandidatesApi(APIView):
 		data = []
 		rank = 1
 
+		active=[]
+		offline=[]
 		for candidate in candidates:
 			address=candidate.candidate.address
 			if not any(address.lower() in d for d in known_accounts) and not (address.lower() in network_validators):
 				r = Reward.objects.filter(epoch=last_epoch,candidate=candidate.candidate)
 				voters = Vote.objects.filter(amount__gt=0,candidate=candidate.candidate)
 				voter_count = voters.distinct('account').count()
-
-				candidate_rewards = Reward.objects.filter(candidate=candidate.candidate,epoch__lte=last_epoch).aggregate(total_rewards=Sum('amount'))
-
-				rewards = r.values('amount').aggregate(total_rewards=Sum('amount'))
-				rewards_last_epoch = rewards['total_rewards']
-
-				locked = voters.aggregate(total_staked=Sum('amount'))
-				if locked['total_staked']==None:
-					staked = 0
-				else:
-					staked = locked['total_staked']
-
-				if staked > 0 and voter_count == 0: voter_count = 1
-				
-				last_signed = Signers.objects.filter(account=candidate.candidate,epoch=last_epoch).order_by('-epoch').first()
-
-				if last_signed is not None:
-					last_signed_block=last_signed.epoch.number
-				else:
-					last_signed_block-0
 
 				roi = calculateROI(candidate.candidate.address)
 				c=CandidateSerializer(_Candidate(
@@ -330,12 +312,17 @@ class AllCandidatesApi(APIView):
 					voters=voter_count,
 					roi=float(roi['lifetime_roi']),
 					))
-				rank += 1
-				data.append(c.data)
-		sorted_data = sorted(data, key=lambda k: k['roi'], reverse=False) 
+				if c.data['status'] == 'SLASHED' or c.data['status'] == 'RESIGNED':
+					offline.append(c.data)
+				else:
+					rank += 1
+					active.append(c.data)
+		sorted_data = sorted(active, key=lambda k: k['roi'], reverse=False) 
+
 		rank = 1
 		for x in range(0,len(sorted_data)-1):
-			sorted_data[x]['rank']=rank
+			sorted_data[x].rank=rank
 			rank += 1
+		sorted_data = sorted_data + offline
 		s=AllCandidatesSerializer(_AllCandidates(candidates=sorted_data))
 		return Response(s.data)

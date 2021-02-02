@@ -83,7 +83,9 @@ class CandidateSerializer(serializers.Serializer):
 	status=serializers.CharField(max_length=20)
 	voters=serializers.IntegerField()
 	roi=serializers.DecimalField(max_digits=99,decimal_places=2)
-
+	class Meta:
+		model=_Candidate
+		
 class _AllCandidates:
 	def __init__(self,candidates):
 		self.candidates=candidates
