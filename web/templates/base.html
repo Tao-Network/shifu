@@ -501,7 +501,7 @@
       </a>
       <ul class="dropdown-menu dropdown-menu-right">
        <li class="dropdown-item user-details">
-        <a href="javaScript:void();">
+        <a href="{% url 'profile' %}">
            <div class="media">
              <div class="avatar">
               <img class="align-self-start mr-3" alt="user avatar" src="{% gravatar_url request.user.username 40 %}">
