@@ -177,8 +177,9 @@ def calculateROI(address):
 	account = Account.objects.get(address__iexact=address)
 	is_candidate = account.is_candidate
 	if is_candidate:
-		if account.owner is not None:
-			account = Account.objects.get(address__iexact=account.owner.address)
+		rewards = Reward.objects.filter(candidate=account)
+	else:
+		rewards = Reward.objects.filter(account=account)
 	if account.is_owner:
 		staked += (account.candidates_owned.count() * 100000)
 	rewards = Reward.objects.filter(account=account)

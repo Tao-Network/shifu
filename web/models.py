@@ -120,7 +120,11 @@ class Validator(models.Model):
 			return None
 		else:
 			return status.status
-
+			
+	@property
+	def roi(self):
+		return calculateROI(self.address)
+	
 
 class Vote(models.Model):
 	account =  models.ForeignKey(

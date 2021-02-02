@@ -262,11 +262,10 @@ class OwnedCandidatesApi(APIView):
 		for candidate in candidates:
 			address=candidate.candidate.address
 			if not any(address.lower() in d for d in known_accounts) and not (address.lower() in network_validators):
-				roi = calculateROI(candidate.candidate.address)
 				c = OwnedCandidateSerializer(_OwnedCandidate(
 					address=candidate.candidate.address,
 					status=candidate.status,
-					roi=roi['lifetime_roi'],
+					roi=candidate.roi['lifetime_roi'],
 				)) 
 				data.append(c.data)
 		s = OwnedCandidatesSerializer(_OwnedCandidates(data))		
