@@ -22,18 +22,18 @@ from rest_framework import status, generics, viewsets
 from rest_framework.reverse import reverse
 from rest_framework.pagination import PageNumberPagination
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from web.serializers import _Vote, _Roi, _Earnings, _DailyEarnings, _NetworkInfo, _OwnedCandidates, _OwnedCandidate, _Candidate, _AllCandidates
+from web.serializers import _Vote, _Roi, _Earnings, _DailyEarnings, _NetworkInfo, _OwnedCandidates, _OwnedCandidate, _Candidate, _AllCandidates, _ActualRoi
 import logging
 
 log = logging.getLogger(__name__)
 
 class VotesList(APIView):
-	"""
-	Returns the current votes for an account
-
-	If the address is a validator, it returns the votes for that validator.  If the address is an account, it returns the votes placed by that account.
-	"""
 	def get(self, request, address, format=None):
+		"""
+		Returns the current votes for an account
+
+		If the address is a validator, it returns the votes for that validator.  If the address is an account, it returns the votes placed by that account.
+		"""
 		config = Crawler.objects.get(id=0)
 		block_number = config.block_number - 1
 		epoch = block_number // settings.BLOCKS_PER_EPOCH
@@ -157,14 +157,29 @@ class NetworkInfoApi(APIView):
 		))
 		return Response(serializer.data)
 
+class ActualRoiApi(APIView):
+	def get(self, request, address=None):
+		"""
+
+		Get the 24 hour ROI for an address.
+
+		The address may be a validator or an account.
+		"""
+		roi = calculateActualROI(address)
+		serializer=ActualRoiSerializer(_ActualRoi(
+			y=roi['y'],
+			lw=roi['lw'],
+			lm=roi['lm']))
+		return Response(serializer.data)
+
 class EarningsApi(APIView):
-	"""
-
-	Get the earnings for an address.
-
-	The address may be a validator or an account.
-	"""
 	def get(self, request, address=None, format=None):
+		"""
+
+		Get the earnings for an address.
+
+		The address may be a validator or an account.
+		"""
 		epoch_rewards = None
 		account=None
 		start_time=pytz.utc.localize(datetime.now())

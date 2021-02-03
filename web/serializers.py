@@ -15,6 +15,19 @@ class VoteSerializer(serializers.Serializer):
 	class Meta:
 		model = _Vote
 
+class _ActualRoi:
+	def __init__(self,y,lw,lm):
+		self.y=y
+		self.lw=lw
+		self.lm=lm
+
+class ActualRoiSerializer(serializers.Serializer):
+	y = serializers.DecimalField(default=0,max_digits=99,decimal_places=2)
+	lw = serializers.DecimalField(default=0,max_digits=99,decimal_places=2)
+	lm = serializers.DecimalField(default=0,max_digits=99,decimal_places=2)
+	class Meta:
+		model=_ActualRoi	
+
 class _Roi:
 	def __init__(self,timestamp,block,epoch,is_candidate,locked,earnings,avg_daily_roi,avg_weekly_roi,avg_monthly_roi,avg_yearly_roi,lifetime_roi):
 		self.timestamp = timestamp
@@ -85,7 +98,7 @@ class CandidateSerializer(serializers.Serializer):
 	roi=serializers.DecimalField(max_digits=99,decimal_places=2)
 	class Meta:
 		model=_Candidate
-		
+
 class _AllCandidates:
 	def __init__(self,candidates):
 		self.candidates=candidates

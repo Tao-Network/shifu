@@ -111,6 +111,27 @@
                   <div class="card-body align-items-start" style="min-height:200px;max-height:200px;">
                     <div id="spark1"></div>
                   </div>
+                  <div class="card-body">
+                    <p class="mb-0 small-font">Last 24 hour ROI</p>
+                    <h5 class="mb-0"><span id="last_24_roi"></span> <span class="float-right"><i class="fa fa-usd"></i></span></h5>
+                      <div class="progress my-3" style="height:3px;">
+                        <div class="progress-bar gradient-orange last-24-roi" style="width:0%"></div>
+                      </div>
+                  </div>
+                  <div class="card-body">
+                    <p class="mb-0 small-font">Last Week ROI</p>
+                    <h5 class="mb-0"><span id="last_week_roi"></span> <span class="float-right"><i class="fa fa-usd"></i></span></h5>
+                      <div class="progress my-3" style="height:3px;">
+                        <div class="progress-bar gradient-orange last-week-roi" style="width:0%"></div>
+                      </div>
+                  </div>
+                  <div class="card-body">
+                    <p class="mb-0 small-font">Last Month ROI</p>
+                    <h5 class="mb-0"><span id="last_month_roi"></span> <span class="float-right"><i class="fa fa-usd"></i></span></h5>
+                      <div class="progress my-3" style="height:3px;">
+                        <div class="progress-bar gradient-orange last-month-roi" style="width:0%"></div>
+                      </div>
+                  </div>
                   <div class="card-body align-items-start p-1" style="min-height:250px;max-height:250px;">
                      <div class="card-header text-uppercase" style="margin-bottom:20px;">
                      {% if not request.account.is_candidate %}
@@ -271,6 +292,7 @@
   var vote_url = shifu_addr + "{% url 'vote_api' request.account.address %}";
   var candidates_url = shifu_addr + "{% url 'candidate_api' request.account.address %}";
   var earnings_api = shifu_addr + "{% url 'earnings_api' request.account.address %}";
+  var last24hourroi_api = shifu_addr + "{% url '24Hour_roi_api' request.account.address %}";
   var earnings_details_api = shifu_addr + "{% url 'earnings_details_api' request.account.address %}";
   var table;
   {% if not request.account.is_candidate  and request.account.is_owner %}
@@ -613,6 +635,20 @@ function dataRefresh(){
 const refreshEarnings= () => {
     $.ajax({
         type: "GET",
+        url: last24hourroi_api,
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (response) {
+          $('#last_24_roi').html(response['y']+"%")
+          $('.last-24-roi').css('width',response['y']+"%")
+          $('#last_week_roi').html(response['lw']+"%")
+          $('.last-week-roi').css('width',response['lw']+"%")
+          $('#last_month_roi').html(response['lm']+"%")
+          $('.last-month-roi').css('width',response['lm']+"%")
+        }
+      });
+    $.ajax({
+        type: "GET",
         url: earnings_api,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -626,8 +662,6 @@ const refreshEarnings= () => {
               data.push({x:i.date,y:i.total});
               total = total + parseFloat(i.total);
             });
-            console.log(response)
-            console.log(total);
             $('#total_earned').html(nf.format(parseFloat(response['total_earnings'],'ether')));
             var subtitle=nf.format(parseFloat(total).toFixed(8)) + " TAO";
             options = {

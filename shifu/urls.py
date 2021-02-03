@@ -50,6 +50,7 @@ urlpatterns = [
 	path('api/candidates/<address>/', api.OwnedCandidatesApi.as_view(), name='candidate_api'),
 	path('api/network_info/', api.NetworkInfoApi.as_view(), name='network_info_api'),
 	path('api/roi/<address>/', api.RoiApi.as_view(), name='roi_api'),
+	path('api/roi/actual/<address>/', api.ActualRoiApi.as_view(), name='24Hour_roi_api'),
 	path('api/votes/<address>/', api.VotesList.as_view(), name='vote_api'),
 	path('api/earnings/details/<address>/', api.EarningsDetailsApi.as_view(), name = 'earnings_details_api'),
 	path('api/earnings/', api.EarningsApi.as_view(), name='total_earnings_api'),

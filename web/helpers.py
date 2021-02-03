@@ -3,12 +3,12 @@ import requests,json
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Sum, Avg
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_utils import to_bytes, to_hex, from_wei, to_int,is_hex_address
-import json, time
+import json, time, pytz
 import sha3, ethereum
 from django import forms
 from django.utils.translation import ugettext_lazy as _
@@ -153,18 +153,78 @@ def getRewardsByHash(block_hash):
 			time.sleep(1)
 	return None
 
+def calculateROIByTime(start,block_number,account,epoch_rewards,votes):
+	now = pytz.utc.localize(datetime.now())
+	days_from_now = (now - start).days
+
+	start_block = block_number - (days_from_now * settings.BLOCKS_PER_DAY)
+	end_block = block_number 
+
+	total = epoch_rewards.filter(awarded__gte=start,awarded__lte=now).aggregate(total=Sum('amount'))
+
+	vote_total = votes.filter(block_number__gte=start_block,block_number__lte=end_block).aggregate(total=Sum('amount'))
+
+	staked = 0
+	if account.is_owner:
+		staked = (account.candidates_owned.count() * 100000)
+	if account.is_candidate:
+		staked = 100000
+
+	if vote_total['total'] is None:
+		vote_total['total'] = staked 
+	else:
+		vote_total['total'] = vote_total['total'] + staked
+
+	result="{:.2f}".format((total['total'] / vote_total['total']) * 100)
+
+	return result
+
+def calculateActualROI(address):
+	from .models import Crawler, Account, Reward, Vote 
+	config = Crawler.objects.get(id=0)
+	block_number = config.block_number - 1
+	account=None
+	if address is not None:
+		account = Account.objects.get(address__iexact=address)
+		if account.is_candidate:
+			epoch_rewards = Reward.objects.select_related('account').filter(candidate=account).order_by('-awarded')
+			votes = Vote.objects.filter(candidate=account)
+		else:
+			epoch_rewards = Reward.objects.select_related('candidate').filter(account=account).order_by('-awarded')
+			votes = Vote.objects.filter(account=account)
+	else:
+		epoch_rewards = Reward.objects.select_related('account','candidate').order_by('-awarded')
+		votes = Vote.objects
+
+	if epoch_rewards is not None:
+		start = pytz.utc.localize(datetime.now() - timedelta(hours=24))
+		yesterday_result = calculateROIByTime(start,block_number,account,epoch_rewards,votes)
+
+		start = pytz.utc.localize(datetime.now() - timedelta(days=7))
+		last_week_result = calculateROIByTime(start,block_number,account,epoch_rewards,votes)
+
+		start = pytz.utc.localize(datetime.now() - timedelta(days=30))
+		last_month_result = calculateROIByTime(start,block_number,account,epoch_rewards,votes)
+	else:
+		yesterday_result="{:.2f}".format(0.00)
+		last_week_result="{:.2f}".format(0.00)
+		last_month_result="{:.2f}".format(0.00)
+
+	result={
+		'y':yesterday_result,
+		'lw':last_week_result,
+		'lm':last_month_result,
+	}
+
+	return result
+
 def calculateROI(address):
 	if address is None:
 		return None
 	from .models import Crawler, Account, Reward, Vote 
 	config = Crawler.objects.get(id=0)
 	block_number = config.block_number - 1
-
-	block = rpc.eth.getBlock(block_number)
 	epoch = block_number // settings.BLOCKS_PER_EPOCH
-
-	last_epoch = epoch - 1
-	last_epoch_block = rpc.eth.getBlock(last_epoch * settings.BLOCKS_PER_EPOCH)
 
 	avg_daily_roi = 0
 	avg_weekly_roi = 0
