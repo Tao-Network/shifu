@@ -1,93 +1,56 @@
 {% load static %}
 {% load gravatar %}
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="utf-8"/>
-
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
-
   <meta name="description" content=""/>
-
   <meta name="author" content=""/>
   <!-- Primary Meta Tags -->
   <title>Shifu - The Decentralized Finance Application for Tao Network Governance</title>
   <meta name="title" content="Shifu - The Decentralized Finance Application for Tao Network Governance">
   <meta name="description" content="Manage your Tao stake! Voting for network validators earns money every 30 minutes, directly into your MetaMask account! Control the network through DeFi!">
-
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://shifu-beta.tao.network/">
   <meta property="og:title" content="Shifu - The Decentralized Finance Application for Tao Network Governance">
   <meta property="og:description" content="Manage your Tao stake! Voting for network validators earns money every 30 minutes, directly into your MetaMask account! Control the network through DeFi!">
   <meta property="og:image" content="https://shifu-beta.tao.network/assets/images/preview.png">
-
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://shifu-beta.tao.network/">
   <meta property="twitter:title" content="Shifu - The Decentralized Finance Application for Tao Network Governance">
   <meta property="twitter:description" content="Manage your Tao stake! Voting for network validators earns money every 30 minutes, directly into your MetaMask account! Control the network through DeFi!">
   <meta property="twitter:image" content="https://shifu-beta.tao.network/assets/images/preview.png">
-  
   <!-- loader-->
-
   <link href={% static "/css/pace.min.css" %} rel="stylesheet" type="text/css" />
-
-  
   <!--favicon-->
-
   <link rel="icon" href={% static "/images/favicon.ico" %} type="image/x-icon">
-
   <!-- Vector CSS -->
-
   <link href={% static "/plugins/vectormap/jquery-jvectormap-2.0.2.css" %} rel="stylesheet" type="text/css" />
-
   <!-- simplebar CSS-->
-
   <link href={% static "/plugins/simplebar/css/simplebar.css" %} rel="stylesheet" type="text/css"/>
-
   <!-- Bootstrap core CSS-->
-
   <link href={% static "/css/bootstrap.min.css" %} rel="stylesheet" type="text/css"/>
-
   <!-- animate CSS-->
-
   <link href={% static "/css/animate.css" %} rel="stylesheet" type="text/css" %}/>
-
   <!-- Icons CSS-->
-
   <link href={% static "/css/icons.css" %} rel="stylesheet" type="text/css" %}/>
-
   <!-- Horizontal CSS-->
-
   <link href={% static "/css/horizontal-menu.css" %} rel="stylesheet" type="text/css"/>
-
   <!-- Custom Style-->
-
   <link href={% static "/css/app-style.css" %} rel="stylesheet" type="text/css"/>
-
   <style>
-#btnNetworkTrigger,#btnBetaTrigger{
-  display:none;
-}
-
+    #btnNetworkTrigger,#btnBetaTrigger{
+      display:none;
+    }
   </style>
-
   <!-- Bootstrap core JavaScript-->
-
   <script src="{% static '/js/jquery.min.js' %}"></script>
-
   <script src="{% static '/js/popper.min.js' %}"></script>
-
   <script src="{% static '/js/bootstrap.min.js' %}"></script>
-
-  
-
 </head>
 
 
@@ -95,6 +58,26 @@
 <body class="bg-theme bg-theme2">
 
   <div class="se-pre-con"></div>
+                <div class="modal fade" id="withdrawalmodal" aria-modal="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content bg-success border-success">
+                      <div class="modal-header border-light-2">
+                        <h5 class="modal-title text-white">You have withdrawals pending!</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">×</span>
+                        </button>
+                      </div>
+                      <div class="modal-body text-white">
+                        <p>You have a withdrawal pending. Click "Start Withdrawal!" below to send a withdrawal request.</p>
+                        <p>This message will appear for every withdrawal you have which is pending and will continue to appear until all pending withdrawals are processed.</p>
+                      </div>
+                      <div class="modal-footer border-light-2">
+                        <button type="button" class="btn btn-link text-white" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                        <button id="btn-withdraw" type="button" class="btn btn-link text-white"><i class="fa fa-check-square-o"></i> Start Withdrawal!</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div class="modal fade" id="dangermodal" aria-modal="true">
                   <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content border-danger">
@@ -671,12 +654,12 @@
     <a href="javaScript:void();" class="back-to-top"><i class="fa fa-angle-double-up"></i> </a>
 
     <!--End Back To Top Button-->
-                <button class="btn btn-primary btn-lg" id="btnNetworkTrigger" data-toggle="modal" data-target="#networkmodal">
-                <button class="btn btn-primary btn-lg hidden" id="btnBetaTrigger" data-toggle="modal" data-target="#dangermodal">
+                <button class="btn btn-primary btn-lg d-none" id="btnNetworkTrigger" data-toggle="modal" data-target="#networkmodal">
+                <button class="btn btn-primary btn-lg d-none" id="btnBetaTrigger" data-toggle="modal" data-target="#dangermodal">
+                <button class="btn btn-primary btn-lg d-none" id="btnWithdrawalTrigger" data-toggle="modal" data-target="#withdrawalmodal">
 
 
   </div><!--End wrapper-->
-
 
 
 
@@ -730,6 +713,63 @@
   const validator_contract = new web3.eth.Contract(contract_abi, contract_address);
 $( document ).ready(function() {
 
+  const withdrawalPending = (address) => {
+    return validator_contract.methods.getWithdrawBlockNumbers().call({
+            from: address
+        }).then((result) => {
+          let x = getBlock().then(function(blk){
+            return blk.number 
+          }).then(function(blockNumber){
+              let map = result.map((it, idx) => {
+                  it = it.toString()
+                  if (parseInt(it) < blockNumber && it != "0") {
+                    return [ parseInt(it), parseInt(idx) ];
+                  }
+              })
+              var r = false;
+              map.forEach(function(i){
+                if (i !== undefined){
+                  if (i[1].toString()!='0'){
+                    if (!r){
+                      // you have withdrawals pending
+                      $('#btnWithdrawalTrigger').click();
+                      $('#btnWithdrawalTrigger').val([i[0],i[1]]);
+                      r = true;
+                    }
+                  }
+                }
+              })
+          })
+        })  
+  }
+
+  $('#btn-withdraw').on('click',function(){
+    web3.eth.getGasPrice(function(e, r) { 
+      gasPrice = r;
+      account = web3.utils.toChecksumAddress('{{request.user.username}}');
+      $('#waitingmodal').modal('toggle');
+      blk = $('#btnWithdrawalTrigger').val();
+      blk = blk.split(',')
+      try{
+        validator_contract.methods.withdraw(parseInt(blk[0]),parseInt(blk[1])).send({from: account,gas,gasPrice})
+          .on('transactionHash', function(hash){
+            $('#waitingmodal').modal('hide');
+            $('#submitmodal').modal('toggle');
+          })
+          .on('receipt', function(receipt){
+            location.reload();
+          })
+          .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+            $('#waitingmodal').modal('hide');
+            $('#submitmodal').modal('hide');
+            $('#networkerrormodal').modal('toggle');
+            console.log(error);
+          });      
+      } catch(err) {
+        console.log(err);
+      }
+    });
+  });
   $("#vote-amount").inputFilter(function(value) {
     return /^\d*$/.test(value) && (parseInt(value) >= 0 || parseInt(value) <= accountBalance('{{ request.user.username }}')); });
 
@@ -836,11 +876,7 @@ $( document ).ready(function() {
       localStorage.setItem('popState','shown')
   }
 
-  //$('#danger-close, #dangermodal').click(function() // You are clicking the close button
-  //{
-  //    $('#dangermodal').hide(); // Now the pop up is hidden.
-  //});
-
+  const pending = withdrawalPending('{{request.user.username}}')
 });
 </script>
 {% endblock javascript %}

@@ -14,6 +14,10 @@ const accountBalance = async (address) => {
   return x
 }
 
+const getBlock = async() => {
+  return await web3.eth.getBlock('latest');
+}
+
 // Restricts input for each element in the set of matched elements to the given inputFilter.
 (function($) {
   $.fn.inputFilter = function(inputFilter) {

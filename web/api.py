@@ -61,7 +61,7 @@ class VotesList(APIView):
 class RoiApi(APIView):
 	def get(self, request, address, format=None):
 		"""
-		Return the ROI for a given address
+		Return the average ROI for a given address
 
 		There are 48 epochs in a day, 7 days in a week, 52 weeks in a year. ROI is calculated as (Earnings / 48) * Timeframe.
 		"""
@@ -161,7 +161,7 @@ class ActualRoiApi(APIView):
 	def get(self, request, address=None):
 		"""
 
-		Get the 24 hour ROI for an address.
+		Get the actual hour ROI for an address.
 
 		The address may be a validator or an account.
 		"""
